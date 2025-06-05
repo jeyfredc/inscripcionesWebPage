@@ -1,31 +1,90 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import type { UserRegistrationForm } from '../../types/UserRegistrationForm'
+import { useAppStore } from '../../store/UseAppStore'
+import ValidationError from './ValidationError'
+const initialState:UserRegistrationForm = {
+    Nombre: '',
+    Email: '',
+    Password: '',
+    RolId: 0
+}
 
 const FormRegister = () => {
+
+    const { createUser, successCreateUser, resetSuccessCreateUser    } = useAppStore()
+    const [formState, setFormState] = useState<UserRegistrationForm>(initialState)
+    const [confirmPassword, setConfirmPassword] = useState<string>('')
+    const [errors, setErrors] = useState<string[]>([]);
+    const [touched, setTouched] = useState({
+        confirmPassword: false
+    });
+
     const navigate = useNavigate()
-  const [isTeacher, setIsTeacher] = useState(false)
+  const [isTeacher, setIsTeacher] = useState<boolean>(false)
+
+  useEffect(() => {
+    setFormState(prev => ({ 
+        ...prev,
+        RolId: isTeacher ? 2 : 1
+    }))
+
+    if(successCreateUser){
+        navigate('/')
+        resetSuccessCreateUser()
+    }
+}, [isTeacher, successCreateUser])
+
+
+const validatePasswordConfirmation = () => {
+    if (formState.Password !== confirmPassword) {
+        setErrors(['Las contraseñas no coinciden']);
+    } else {
+        setErrors([]);
+    }
+};
+
+const handleConfirmPasswordBlur = () => {
+    setTouched(prev => ({ ...prev, confirmPassword: true }));
+    validatePasswordConfirmation();
+};
+
+const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setConfirmPassword(value);
+    
+    // Solo validar si ya se ha tocado el campo
+    if (touched.confirmPassword) {
+        if (value && formState.Password !== value) {
+            setErrors(['Las contraseñas no coinciden']);
+        } else {
+            setErrors([]);
+        }
+    }
+};
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState({
+      ...formState,
+      [e.target.name]: e.target.value
+    })
+    
+  }
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault()
+      console.log(formState)
+      if(formState.Password !== confirmPassword){
+        return
+      }
+    createUser(formState)
+
+  }
 
   return (
-    <form className="mt-8 space-y-6">
+    <form onSubmit={handleSubmit} className="mt-8 space-y-6">
       <div className="rounded-md shadow-sm space-y-4">
-        <div>
-          <label htmlFor="name" className="sr-only">
-            Nombre completo
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            autoComplete="name"
-            required
-            className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-            placeholder="Nombre completo"
-          />
-        </div>
-        
-        {/* Switch para seleccionar el rol */}
         <div className="flex items-center justify-center py-2">
-          <span className="text-sm font-medium text-gray-700">Estudiante</span>
+          <span className="text-sm font-medium text-gray-700 mr-2">Estudiante</span>
           <label className="relative inline-flex items-center cursor-pointer">
             <input
               type="checkbox"
@@ -37,6 +96,23 @@ const FormRegister = () => {
             <span className="ml-3 text-sm font-medium text-gray-700">Profesor</span>
           </label>
         </div>
+        <div>
+          <label htmlFor="name" className="sr-only">
+            Nombre completo
+          </label>
+          <input
+            id="name"
+            name="Nombre"
+            type="text"
+            autoComplete="name"
+            required
+            className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+            placeholder="Nombre completo"
+            value={formState.Nombre}
+            onChange={handleChange}
+          />
+        </div>
+
 
         <div>
           <label htmlFor="student-email" className="sr-only">
@@ -44,12 +120,14 @@ const FormRegister = () => {
           </label>
           <input
             id="student-email"
-            name="email"
+            name="Email"
             type="email"
             autoComplete="email"
             required
             className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
             placeholder="Correo electrónico"
+            value={formState.Email}
+            onChange={handleChange}
           />
         </div>
         <div>
@@ -58,27 +136,37 @@ const FormRegister = () => {
           </label>
           <input
             id="password"
-            name="password"
+            name="Password"
             type="password"
             autoComplete="password"
             required
             className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
             placeholder="Contraseña"
+            value={formState.Password}
+            onChange={handleChange}
           />
         </div>
         <div>
-          <label htmlFor="confirm-password" className="sr-only">
+          <label htmlFor="confirmPassword" className="sr-only">
             Confirmar contraseña
           </label>
           <input
-            id="confirm-password"
-            name="confirm-password"
-            type="password"
-            autoComplete="confirm-password"
-            required
-            className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-            placeholder="Confirmar contraseña"
-          />
+        id="confirmPassword"
+        name="ConfirmPassword"
+        type="password"
+        autoComplete="new-password"
+        required
+        className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
+            errors.length > 0 ? 'border-red-500' : 'border-gray-300'
+        } placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+        placeholder="Confirmar contraseña"
+        value={confirmPassword}
+        onChange={handleConfirmPasswordChange}
+        onBlur={handleConfirmPasswordBlur}
+    />
+    {touched.confirmPassword && errors.length > 0 && (
+        <ValidationError errors={errors} />
+    )}
         </div>
       </div>
 

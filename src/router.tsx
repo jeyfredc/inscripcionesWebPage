@@ -1,6 +1,7 @@
 import { HashRouter as BrowserRouter, Route, Routes } from "react-router-dom";
 import Login from "./views/Login/Login";
 import Registro from "./views/Login/Registro";
+import { ToastContainer } from "react-toastify";
 
 export default function AppRouter() {
 
@@ -35,6 +36,7 @@ export default function AppRouter() {
 
         </Routes>
       </BrowserRouter>
+      <ToastContainer />
     </>
   );
 }
