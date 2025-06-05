@@ -1,13 +1,36 @@
+import { useEffect,  useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { UserLoginForm } from "../../types/User";
+import { useAppStore } from "../../store/UseAppStore";
 
-interface FormLoginProps {
-    
+const initialState: UserLoginForm = {
+    Email: '',
+    Password: ''
 }
 
 const FormLogin = () => {
+    const {loginUser, isAuthenticated} = useAppStore()
+    const [form, setForm] = useState(initialState)
     const navigate = useNavigate()
+
+    useEffect(() => {
+        if(isAuthenticated){
+            navigate('/dashboard')
+        }
+    }, [isAuthenticated])
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target
+        setForm({ ...form, [name]: value })
+    }
+
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault()
+        loginUser(form)
+    }
     return (
-        <form className="mt-8 space-y-6">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <div className="rounded-md shadow-sm space-y-4">
                 <div>
                     <label htmlFor="student-email" className="sr-only">
@@ -15,12 +38,14 @@ const FormLogin = () => {
                     </label>
                     <input
                         id="student-email"
-                        name="email"
+                        name="Email"
                         type="email"
                         autoComplete="email"
                         required
                         className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                         placeholder="Correo electrónico"
+                        value={form.Email}
+                        onChange={handleChange}
                     />
                 </div>
                 <div>
@@ -29,12 +54,14 @@ const FormLogin = () => {
                     </label>
                     <input
                         id="student-password"
-                        name="password"
+                        name="Password"
                         type="password"
                         autoComplete="current-password"
                         required
                         className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                         placeholder="Contraseña"
+                        value={form.Password}
+                        onChange={handleChange}
                     />
                 </div>
             </div>
