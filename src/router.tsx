@@ -13,6 +13,8 @@ import { useAppStore } from "./store/UseAppStore";
 import { RoleBasedRoute } from "./components/RoleBasedRoute";
 
 import NotFound from "./views/NotFound/NotFound";
+import ViewAdmin from "./views/Dashboard/Admin/ViewAdmin";
+import RegistrarClase from "./views/Dashboard/Inscripcion/RegistrarClase";
 
 
 export default function AppRouter() {
@@ -44,9 +46,15 @@ export default function AppRouter() {
             </Route>
 
 
-            <Route element={<RoleBasedRoute allowedRoles={['Profesor', 'Administrador']} />}>
-              <Route path="registro-materias" element={<RegistroMaterias />} />
+            <Route element={<RoleBasedRoute allowedRoles={['Profesor']} />}>
+              <Route path="registro-clase" element={<RegistrarClase />} />
               <Route path="ver-materias" element={<VerMaterias />} />
+            </Route>
+
+
+            <Route element={<RoleBasedRoute allowedRoles={['Administrador']} />}>
+              <Route index element={<ViewAdmin />} />
+              <Route path="admin" element={<ViewAdmin />} />
             </Route>
 
 

@@ -19,7 +19,7 @@ export type UserSliceType = {
 }
 
 export const createUserSlice: StateCreator<UserSliceType> = (set, get) => ({
-    dataUser: null,
+    dataUser: JSON.parse(localStorage.getItem('DATA_USER') || 'null'),
     authToken: localStorage.getItem('AUTH_TOKEN') || null,
     isAuthenticated: !!localStorage.getItem('AUTH_TOKEN'),
     successCreateUser: false,
@@ -51,6 +51,7 @@ export const createUserSlice: StateCreator<UserSliceType> = (set, get) => ({
             set({authToken: response.Data.Token})
             set({isAuthenticated: true})
             localStorage.setItem('AUTH_TOKEN', response.Data.Token)
+            localStorage.setItem('DATA_USER', JSON.stringify(response.Data))
             return response
         }
 

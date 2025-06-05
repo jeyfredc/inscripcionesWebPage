@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { createUserSlice, type UserSliceType } from './UserSlice';
-/* import { createBooksSlice, type BooksSliceType } from './BooksSlice'; */
+import { createTeacherSlice, type TeacherSliceType } from './TeacherSlice';
 
 
 
-export const useAppStore = create<UserSliceType /* & BooksSliceType */>()(devtools((...a)=> ({
+
+export const useAppStore = create<UserSliceType & TeacherSliceType>()(devtools((...a)=> ({
     ...createUserSlice(...a),
-/*     ...createBooksSlice(...a) */
+    ...createTeacherSlice(...a),
+
 })))

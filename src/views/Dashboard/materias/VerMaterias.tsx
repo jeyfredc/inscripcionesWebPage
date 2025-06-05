@@ -1,26 +1,30 @@
 // src/views/Dashboard/materias/VerMaterias.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useAppStore } from '../../../store/UseAppStore';
 
 const VerMaterias = () => {
-  // Datos de ejemplo - reemplazar con llamada a API
-  const materias = [
-    { 
-      id: '1', 
-      nombre: 'Matemáticas', 
-      horario: 'Lunes 8:00 - 10:00', 
-      cupos: 5, 
-      inscritos: 3,
-      estado: 'Activa'
-    },
-    { 
-      id: '2', 
-      nombre: 'Programación', 
-      horario: 'Martes 10:00 - 12:00', 
-      cupos: 5, 
-      inscritos: 5,
-      estado: 'Llena'
-    },
-  ];
+  
+  const {coursesByTeacher, getCoursesByTeacher, dataUser} = useAppStore()
+
+console.log(coursesByTeacher);
+
+  useEffect(() => {
+    if(dataUser){
+      getCoursesByTeacher(dataUser.Id)
+    }
+  }, [dataUser])
+
+  const cupoMateria = (cupoMaximo:number, cupoDisponible:number) => {
+    if(cupoDisponible === 0){
+      return 'Llena'
+    }else if(cupoDisponible === cupoMaximo){
+      return 'Activa'
+    }else{
+      return 'Activa'
+    }
+  }
+  
+
 
   return (
     <div className="p-6">
@@ -50,23 +54,30 @@ const VerMaterias = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {materias.map((materia) => (
-              <tr key={materia.id} className="hover:bg-gray-50">
+            {coursesByTeacher.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                  No hay materias inscritas para el profesor {dataUser?.Nombre}
+                </td>
+              </tr>
+            )}
+            {coursesByTeacher.map((materia) => (
+              <tr key={materia.CodigoMateria} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{materia.nombre}</div>
+                  <div className="text-sm font-medium text-gray-900">{materia.NombreMateria}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{materia.horario}</div>
+                  <div className="text-sm text-gray-500">{materia.Horario}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-500">
-                    {materia.inscritos}/{materia.cupos} estudiantes
+                    {materia.CupoMaximo}/{materia.CupoDisponible} 
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    ${materia.estado === 'Activa' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                    {materia.estado}
+                    ${materia.CupoMaximo === materia.CupoDisponible ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    {materia.CupoMaximo === materia.CupoDisponible ? 'Activa' : 'Llena'}
                   </span>
                 </td>
 

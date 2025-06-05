@@ -5,7 +5,7 @@ const RegistroMaterias = () => {
   const [formData, setFormData] = useState({
     nombre: '',
     horario: '',
-    cupos: '',
+    cupos: 30,
     descripcion: '',
   });
 
@@ -19,7 +19,7 @@ const RegistroMaterias = () => {
     // Lógica para guardar la materia
     console.log('Materia registrada:', formData);
     alert('Materia registrada con éxito');
-    setFormData({ nombre: '', horario: '', cupos: '', descripcion: '' });
+    setFormData({ nombre: '', horario: '', cupos: 30, descripcion: '' });
   };
 
   return (
@@ -68,9 +68,8 @@ const RegistroMaterias = () => {
               name="cupos"
               min="1"
               value={formData.cupos}
-              onChange={handleChange}
-              required
-              className="mt-1 block w-24 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              disabled
+              className="mt-1 block w-24 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-center"
             />
           </div>
 
