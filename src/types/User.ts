@@ -25,6 +25,7 @@ export interface UserResponseData {
     Nombre: string;
     Email: string;
     Rol: string;
+    Creditos_Disponibles: number;
     Token: string;
   }
   
