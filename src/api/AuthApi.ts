@@ -1,7 +1,7 @@
 
 import { isAxiosError } from "axios";
-import { UserLoginForm, UserRegistrationForm } from "../types";
 import api from "../lib/axios";
+import type { UserLoginForm, UserRegistrationForm } from "../types/User";
 export interface ApiResponse<T = any> {
     Data: T | null;
     Success: boolean;

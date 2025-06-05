@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { UserRegistrationForm } from '../../types/UserRegistrationForm'
+import type { UserRegistrationForm } from '../../types/User'
 import { useAppStore } from '../../store/UseAppStore'
 import ValidationError from './ValidationError'
 const initialState:UserRegistrationForm = {

@@ -1,7 +1,8 @@
 import { createAccount } from "../api/AuthApi";
-import type { UserRegistrationForm } from "../types/UserRegistrationForm";
+
 import type { StateCreator } from "zustand";
 import { toast } from "react-toastify";
+import type { UserRegistrationForm } from "../types/User";
 
 
 export type UserSliceType = {
