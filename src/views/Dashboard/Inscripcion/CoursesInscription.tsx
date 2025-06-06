@@ -3,7 +3,7 @@ import { useAppStore } from '../../../store/UseAppStore';
 import { CourseInscription } from '../../../types/Courses';
 
 const CoursesInscription = () => {
-  const { getCoursesAvailable, availableCourses, dataUser,inscriptionCourses } = useAppStore();
+  const { getCoursesAvailable, availableCourses, dataUser,creditStudent , inscriptionCourses} = useAppStore();
   const [selectedMaterias, setSelectedMaterias] = useState<string[]>([]);
   const [formCourses, setFormCourses] = useState<CourseInscription>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -109,7 +109,7 @@ const CoursesInscription = () => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Inscripción de Materias</h1>
-      {dataUser?.Creditos_Disponibles ===1 &&
+      {creditStudent ===1 &&
                   <div className="ml-3 flex items-center bg-red-50 border-l-4 border-red-500 p-4">
                   <p className="text-sm text-red-700 font-semibold">Lo sentimos, ya no puedes inscribirte en más materias ya que no tienes créditos disponibles</p>
                 </div>
@@ -130,7 +130,7 @@ const CoursesInscription = () => {
                     id={`materia-${materia.CodigoMateria}`}
                     checked={selectedMaterias.includes(materia.CodigoMateria)}
                     onChange={() => handleCheckboxChange(materia.CodigoMateria)}
-                    disabled={materia.CupoDisponible === 0 || dataUser?.Creditos_Disponibles === 1}
+                    disabled={materia.CupoDisponible === 0 || creditStudent === 1}
                     className="h-5 w-5 text-blue-600 rounded"
                   />
                   <label htmlFor={`materia-${materia.CodigoMateria}`} className="ml-3 flex-1">

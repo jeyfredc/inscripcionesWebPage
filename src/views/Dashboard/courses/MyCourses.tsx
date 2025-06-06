@@ -1,28 +1,68 @@
 // src/views/Dashboard/materias/MisMaterias.tsx
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useAppStore } from '../../../store/UseAppStore';
 
 const MyCourses = () => {
-  // Datos de ejemplo - reemplazar con llamada a API
-  const misMaterias = [
-    { id: '1', nombre: 'Matemáticas', horario: 'Lunes 8:00 - 10:00', profesor: 'Dr. Pérez' },
-    { id: '2', nombre: 'Programación', horario: 'Martes 10:00 - 12:00', profesor: 'Ing. Martínez' },
-  ];
+
+
+  const hasFetched = useRef(false);
+
+  const { getCoursesById, studentId, coursesAssigned, deleteCourses } = useAppStore();
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (hasFetched.current) return;
+
+    hasFetched.current = true;
+
+    (async () => {
+      setIsLoading(true);
+      try {
+        const response = await getCoursesById(studentId || 0);
+        if (!response.Success) {
+          setError('No se pudieron cargar las materias disponibles');
+          console.error('Error al cargar materias:', response.Message);
+        }
+      } catch (err) {
+        setError('Error de conexión al cargar las materias');
+        console.error('Error inesperado:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [getCoursesById, studentId]);
+
+
+  const onRemoveCourse = async (codigoMateria: string) => {
+    try {
+      await deleteCourses([
+        {
+          IdEstudiante: studentId || 0,
+          CodigoMateria: codigoMateria
+        }
+      ]);
+    } catch (error) {
+      console.error('Error al eliminar la materia:', error);
+    }
+  };
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Mis Materias Inscritas</h1>
       <div className="bg-white shadow overflow-hidden sm:rounded-md">
         <ul className="divide-y divide-gray-200">
-          {misMaterias.length > 0 ? (
-            misMaterias.map((materia) => (
-              <li key={materia.id} className="px-6 py-4 hover:bg-gray-50">
+          {coursesAssigned.length > 0 ? (
+            coursesAssigned.map((materia) => (
+              <li key={materia.Codigomateria} className="px-6 py-4 hover:bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">{materia.nombre}</h3>
-                    <p className="text-sm text-gray-500">{materia.horario}</p>
-                    <p className="text-sm text-gray-500">Profesor: {materia.profesor}</p>
+                    <h3 className="text-lg font-medium text-gray-900">{materia.Materia} - {materia.Codigomateria}</h3>
+                    <p className="text-sm text-gray-500">{materia.Horario}</p>
+                    <p className="text-sm text-gray-500">Profesor: {materia.Profesor}</p>
                   </div>
-                  <button className="text-red-600 hover:text-red-800 text-sm font-medium">
+                  <button className="text-red-600 hover:text-red-800 text-sm font-medium" onClick={() => onRemoveCourse(materia.Codigomateria)}>
                     Dar de baja
                   </button>
                 </div>

@@ -3,11 +3,9 @@ import Login from "./views/Login/Login";
 import Registro from "./views/Login/Registro";
 import { ToastContainer } from "react-toastify";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import Menu from "./components/Menu/Menu";
 import Dashboard from "./views/Dashboard/Dashboard";
 import CoursesInscription from "./views/Dashboard/Inscripcion/CoursesInscription";
 import MyCourses from "./views/Dashboard/courses/MyCourses";
-import RegistroMaterias from "./views/Dashboard/Inscripcion/RegistroMaterias";
 import ViewCourses from "./views/Dashboard/courses/ViewCourses";
 import { useAppStore } from "./store/UseAppStore";
 import { RoleBasedRoute } from "./components/RoleBasedRoute";
@@ -25,7 +23,7 @@ export default function AppRouter() {
 
   return (
     <>
-      <BrowserRouter>
+      <>
 
 
         <Routes>
@@ -63,7 +61,7 @@ export default function AppRouter() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
+      </>
       <ToastContainer />
     </>
   );

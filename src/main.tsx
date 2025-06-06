@@ -1,10 +1,15 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import AppRouter from './router'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import { HashRouter as BrowserRouter } from 'react-router-dom';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <AppRouter />
-  </StrictMode>,
-)
+import './lib/axios';
+import AppRouter from './router';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <AppRouter />
+    </BrowserRouter>
+  </React.StrictMode>
+);

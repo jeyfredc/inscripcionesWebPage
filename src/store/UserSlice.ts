@@ -77,6 +77,8 @@ export const createUserSlice: StateCreator<
             set({ authToken: null })
             set({ isAuthenticated: false })
             localStorage.removeItem('AUTH_TOKEN')
+            localStorage.removeItem('DATA_USER')
+            localStorage.removeItem('StudentId')
         },
         printAlert: (isError, message) => {
             if (isError) {

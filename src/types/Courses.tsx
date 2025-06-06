@@ -3,7 +3,13 @@ export type CoursesInscriptionData = {
     CodigoMateria: string
 }
     
+export type CorseDeleteData = {
+    IdEstudiante: number
+    CodigoMateria: string
+}
 export type CourseInscription= CoursesInscriptionData[]
+export type CourseInscriptionDelete= CoursesInscriptionData[]
+
 
 
 export type CoursesAvailableData = {
@@ -36,3 +42,13 @@ export type CoursesInscriptionResponse = {
 }
 
 
+export type CoursesInscriptionDeleteResponse = {
+    Data: {
+        Resultado: boolean
+        Mensaje: string
+    }[]
+    Success: boolean
+    Message: string
+    Errors: string[]
+    ValidationErrors: {}
+}

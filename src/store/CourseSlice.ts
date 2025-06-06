@@ -1,92 +1,104 @@
 import type { StateCreator } from "zustand";
-import { getCoursesAvailable, saveCourses } from "../api/CourseApi";
+import { deleteCourses, getCoursesAvailable, saveCourses } from "../api/CourseApi";
 import type { 
+  CorseDeleteData,
   CourseInscription, 
   CoursesAvailableData, 
   CoursesAvailableResponse, 
   CoursesInscriptionResponse 
 } from "../types/Courses";
-import type { AppStore } from "./UseAppStore";
+import { CourseStudent } from "../types/Student";
+import { getStoreUtils, type StoreUtils } from "./StoreUtils";
 
 export interface CourseSliceType {
   availableCourses: CoursesAvailableData[];
+  coursesAssigned: CourseStudent[];
   getCoursesAvailable: () => Promise<CoursesAvailableResponse>;
   inscriptionCourses: (courses: CourseInscription) => Promise<CoursesInscriptionResponse>;
+  deleteCourses: (courses: CourseInscription) => Promise<CoursesInscriptionResponse>;
 }
 
-const getCurrentUser = () => {
-  try {
-    const userData = localStorage.getItem('DATA_USER');
-    return userData ? JSON.parse(userData) : null;
-  } catch (error) {
-    console.error('Error parsing user data:', error);
-    return null;
-  }
-};
+
 
 export const createCourseSlice: StateCreator<
   CourseSliceType,
   [['zustand/devtools', never]],
   [],
   CourseSliceType
-> = (set, get, api) => ({
+> = (set, get, api) => {
+  const utils = getStoreUtils({ get, set, api });
+  
+  return {
   availableCourses: [],
+  coursesAssigned: [],
   
   getCoursesAvailable: async () => {
-    try {
+    return utils.withErrorHandling(async () => {
       const response = await getCoursesAvailable();
-      const printAlert = (api.getState() as unknown as AppStore).printAlert;
       
       if (response.Data) {
         set({ availableCourses: response.Data }, false, 'setAvailableCourses');
-        printAlert?.(false, response.Message);
+        utils.showAlert(false, response.Message);
       } else {
         set({ availableCourses: [] }, false, 'clearAvailableCourses');
         const errorMessage = response.Message || "Error al cargar los cursos";
-        printAlert?.(true, errorMessage);
+        utils.showAlert(true, errorMessage);
       }
-            // Refresh credits if user is a student
-            const user = getCurrentUser();
-            const store = get() as unknown as AppStore;
-            
-            if (user?.Rol === 'Estudiante' && user?.Id && store.getCredits) {
-              await store.getCredits(user.Id);
-            }
-      return response;
       
-    } catch (error) {
-      console.error("Error in getCoursesAvailable:", error);
-      const printAlert = (api.getState() as unknown as AppStore).printAlert;
-      printAlert?.(true, "Error al cargar los cursos");
-      throw error;
-    }
+      const user = utils.getCurrentUser();
+      if (user?.Rol === 'Estudiante' && user?.Id) {
+        await utils.handleStudentCredits(user.Id);
+      }
+      
+      return response;
+    }, "Error al cargar los cursos");
   },
   
   inscriptionCourses: async (courses: CourseInscription) => {
-    try {
+    return utils.withErrorHandling(async () => {
       const response = await saveCourses(courses);
-      const printAlert = (api.getState() as unknown as AppStore).printAlert;
       
       if (response.Data) {
-        printAlert?.(false, response.Message);
+        utils.showAlert(false, response.Message);
       } else {
-        printAlert?.(true, response.Message || "Error al inscribir en los cursos");
+        utils.showAlert(true, response.Message || "Error al inscribir en los cursos");
       }
       
-      // Refresh credits if user is a student
-      const user = getCurrentUser();
-      const store = get() as unknown as AppStore;
-      
-      if (user?.Rol === 'Estudiante' && user?.Id && store.getCredits) {
-        await store.getCredits(user.Id);
+      const user = utils.getCurrentUser();
+      if (user?.Rol === 'Estudiante' && user?.Id) {
+        await utils.handleStudentCredits(user.Id);
+        set({ availableCourses: [] }, false, 'clearAvailableCourses');
+        const appStore = utils.getAppStore();
+        await appStore.getCoursesAvailable?.();
       }
       
       return response;
-    } catch (error) {
-      console.error("Error in inscriptionCourses:", error);
-      const printAlert = (api.getState() as unknown as AppStore).printAlert;
-      printAlert?.(true, "Error al procesar la inscripción");
-      throw error;
-    }
+    }, "Error al procesar la inscripción");
   },
-});
+
+  deleteCourses: async (courses: CorseDeleteData[]) => {
+    return utils.withErrorHandling(async () => {
+      const response = await deleteCourses(courses);
+      
+      if (response.Data) {
+        utils.showAlert(false, response.Data.Message);
+      } else {
+        utils.showAlert(true, response.Data?.Message || "Error al eliminar los cursos");
+      }
+      
+      const user = utils.getCurrentUser();
+      if (user?.Rol === 'Estudiante' && user?.Id) {
+        await utils.handleStudentCredits(user.Id);
+        set({ coursesAssigned: [] }, false, 'clearCoursesAssigned');
+        const studentId = localStorage.getItem('StudentId');
+        const appStore = utils.getAppStore();
+        if (appStore.getCoursesById && studentId) {
+          await appStore.getCoursesById(Number(studentId));
+        }
+      }
+      
+      return response;
+    }, "Error al eliminar los cursos");
+  },
+  };
+}
