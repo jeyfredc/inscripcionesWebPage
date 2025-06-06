@@ -1,9 +1,9 @@
 import React from 'react'
-import RegistroMaterias from '../Inscripcion/RegistroMaterias';
+import RegistroMateriasProfesores from '../Inscripcion/RegistroMateriasProfesores';
 
 const ViewAdmin = () => {
   return (
-    <RegistroMaterias />
+    <RegistroMateriasProfesores />
   )
 }
 

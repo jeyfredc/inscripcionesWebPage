@@ -1,7 +1,7 @@
 
 import { isAxiosError } from "axios";
 import api from "../lib/axios";
-import { CorseDeleteData, CourseInscription, CourseInscriptionDelete, CoursesAvailableResponse, CoursesInscriptionData, CoursesInscriptionDeleteResponse, CoursesInscriptionResponse, FormAssignCourse, ResponseCourseWithoutAssign } from "../types/Courses";
+import { CorseDeleteData, CourseInscription, CourseInscriptionDelete, CoursesAvailableResponse, CoursesInscriptionData, CoursesInscriptionDeleteResponse, CoursesInscriptionResponse, FormAssignCourse, FormRegisterNewCourse, ResponseCourseWithoutAssign } from "../types/Courses";
 
 
 
@@ -140,3 +140,28 @@ export async function AssignCourse(FormAssignCourse: FormAssignCourse) {
 }
 
 
+export async function PostCreateNewCourse(FormAssignCourse: FormRegisterNewCourse) {
+  try {
+      const url = `Courses/register-new-course`;
+      const { data } = await api.post<CoursesInscriptionResponse>(url, FormAssignCourse);
+      return data;
+  } catch (error) {
+      if (isAxiosError(error)) {
+          if (error.response) {
+              return error.response.data;
+          }
+          return {
+              Data: null,
+              Success: false,
+              Message: 'No se pudo conectar con el servidor',
+              Errors: ['Error de conexión'],
+          };
+      }
+      return {
+          Data: null,
+          Success: false,
+          Message: 'Error inesperado',
+          Errors: ['Ocurrió un error inesperado'],
+      };
+  }
+}

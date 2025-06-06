@@ -14,6 +14,8 @@ import NotFound from "./views/NotFound/NotFound";
 import ViewAdmin from "./views/Dashboard/Admin/ViewAdmin";
 import RegistrarClase from "./views/Dashboard/Inscripcion/RegistrarClase";
 import StudentCourse from "./views/Dashboard/courses/StudentCourse";
+import RegistroMateriasProfesores from "./views/Dashboard/Inscripcion/RegistroMateriasProfesores";
+import ListTeacherCourses from "./views/Dashboard/courses/ListTeacherCourses";
 
 
 export default function AppRouter() {
@@ -51,8 +53,9 @@ export default function AppRouter() {
 
 
             <Route element={<RoleBasedRoute allowedRoles={['Administrador']} />}>
-              <Route index element={<ViewAdmin />} />
-              <Route path="admin" element={<ViewAdmin />} />
+              {/* <Route index element={<ViewAdmin />} /> */}
+              <Route path="registro-materias-profesores" element={<RegistroMateriasProfesores />} />
+              <Route path="listar-materias-profesores" element={<ListTeacherCourses />} />
             </Route>
 
 

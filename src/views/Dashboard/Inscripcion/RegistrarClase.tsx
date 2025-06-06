@@ -13,7 +13,7 @@ interface ScheduleData {
 }
 
 const RegistrarClase = () => {
-  const { getCourseWithoutAssign, newCourse ,dataUser , assignCourse} = useAppStore();
+  const { getCourseWithoutAssign, newCourse ,dataUser , assignCourseTeacher: assignCourse} = useAppStore();
   const hasFetched = useRef(false);
   const [selectedCourse, setSelectedCourse] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);

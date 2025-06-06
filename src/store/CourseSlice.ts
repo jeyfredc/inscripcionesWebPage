@@ -1,5 +1,5 @@
 import type { StateCreator } from "zustand";
-import { AssignCourse, deleteCourses, getCoursesAvailable, getCourseWithoutAssign, saveCourses } from "../api/CourseApi";
+import { AssignCourse, deleteCourses, getCoursesAvailable, getCourseWithoutAssign, PostCreateNewCourse, saveCourses } from "../api/CourseApi";
 import type { 
   CorseDeleteData,
   CourseInscription, 
@@ -8,6 +8,7 @@ import type {
   CoursesInscriptionResponse, 
   CourseWithoutAssignData, 
   FormAssignCourse, 
+  FormRegisterNewCourse, 
   ResponseCourseWithoutAssign
 } from "../types/Courses";
 import { CourseStudent } from "../types/Student";
@@ -21,7 +22,8 @@ export interface CourseSliceType {
   deleteCourses: (courses: CourseInscription) => Promise<CoursesInscriptionResponse>;
   newCourse: CourseWithoutAssignData[];
   getCourseWithoutAssign: () => Promise<ResponseCourseWithoutAssign>;
-  assignCourse: (courses: FormAssignCourse) => Promise<CoursesInscriptionResponse>;
+  assignCourseTeacher: (courses: FormAssignCourse) => Promise<CoursesInscriptionResponse>;
+  saveNewCourse: (courses: FormRegisterNewCourse) => Promise<CoursesInscriptionResponse>;
 }
 
 
@@ -125,7 +127,7 @@ export const createCourseSlice: StateCreator<
     }, "Error al cargar los cursos sin asignar");
   },
 
-  assignCourse: async (courses: FormAssignCourse) => {
+  assignCourseTeacher: async (courses: FormAssignCourse) => {
     return utils.withErrorHandling(async () => {
       const response = await AssignCourse(courses);
       
@@ -137,6 +139,19 @@ export const createCourseSlice: StateCreator<
      
       return response;
     }, "Error al asignar los cursos");
+  },
+  saveNewCourse: async (courses: FormRegisterNewCourse) => {
+    return utils.withErrorHandling(async () => {
+      const response = await PostCreateNewCourse(courses);
+      
+      if (response.Data) {
+        utils.showAlert(false, response.Message);
+      } else {
+        utils.showAlert(true, response.Message || "Error al crear la nueva materia");
+      }
+     
+      return response;
+    }, "Error al crear la nueva materia");
   },
   };
 }
