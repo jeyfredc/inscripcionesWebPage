@@ -1,11 +1,14 @@
 import type { StateCreator } from "zustand";
-import { deleteCourses, getCoursesAvailable, saveCourses } from "../api/CourseApi";
+import { AssignCourse, deleteCourses, getCoursesAvailable, getCourseWithoutAssign, saveCourses } from "../api/CourseApi";
 import type { 
   CorseDeleteData,
   CourseInscription, 
   CoursesAvailableData, 
   CoursesAvailableResponse, 
-  CoursesInscriptionResponse 
+  CoursesInscriptionResponse, 
+  CourseWithoutAssignData, 
+  FormAssignCourse, 
+  ResponseCourseWithoutAssign
 } from "../types/Courses";
 import { CourseStudent } from "../types/Student";
 import { getStoreUtils, type StoreUtils } from "./StoreUtils";
@@ -16,6 +19,9 @@ export interface CourseSliceType {
   getCoursesAvailable: () => Promise<CoursesAvailableResponse>;
   inscriptionCourses: (courses: CourseInscription) => Promise<CoursesInscriptionResponse>;
   deleteCourses: (courses: CourseInscription) => Promise<CoursesInscriptionResponse>;
+  newCourse: CourseWithoutAssignData[];
+  getCourseWithoutAssign: () => Promise<ResponseCourseWithoutAssign>;
+  assignCourse: (courses: FormAssignCourse) => Promise<CoursesInscriptionResponse>;
 }
 
 
@@ -31,6 +37,7 @@ export const createCourseSlice: StateCreator<
   return {
   availableCourses: [],
   coursesAssigned: [],
+  newCourse: [],
   
   getCoursesAvailable: async () => {
     return utils.withErrorHandling(async () => {
@@ -99,6 +106,37 @@ export const createCourseSlice: StateCreator<
       
       return response;
     }, "Error al eliminar los cursos");
+  },
+  
+  getCourseWithoutAssign: async () => {
+    return utils.withErrorHandling(async () => {
+      const response = await getCourseWithoutAssign();
+      
+      if (response.Data) {
+        set({ newCourse: response.Data }, false, 'setNewCourse');
+        utils.showAlert(false, response.Message);
+      } else {
+        set({ newCourse: [] }, false, 'clearNewCourse');
+        const errorMessage = response.Message || "Error al cargar los cursos sin asignar";
+        utils.showAlert(true, errorMessage);
+      }
+      
+      return response;
+    }, "Error al cargar los cursos sin asignar");
+  },
+
+  assignCourse: async (courses: FormAssignCourse) => {
+    return utils.withErrorHandling(async () => {
+      const response = await AssignCourse(courses);
+      
+      if (response.Data) {
+        utils.showAlert(false, response.Message);
+      } else {
+        utils.showAlert(true, response.Message || "Error al asignar los cursos");
+      }
+     
+      return response;
+    }, "Error al asignar los cursos");
   },
   };
 }

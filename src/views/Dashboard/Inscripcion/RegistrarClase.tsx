@@ -1,39 +1,45 @@
-import React, { useEffect, useState } from 'react';
+// views/Dashboard/Inscripcion/RegistrarClase.tsx
+import React, { useState, useRef, useEffect } from 'react';
 import { getCourses } from '../../../api/ProfesorApi';
 import { TeacherResponseData } from '../../../types/Teacher';
+import { useAppStore } from '../../../store/UseAppStore';
+import InscriptionCourseTeacher from '../../../components/InscriptionCourseTeacher/InscriptionCourseTeacher';
+import { FormAssignCourse } from '../../../types/Courses';
+
+interface ScheduleData {
+  dia: string;
+  horario: string;
+  grupo: string;
+}
 
 const RegistrarClase = () => {
-  const [courses, setCourses] = useState<TeacherResponseData[]>([]);
+  const { getCourseWithoutAssign, newCourse ,dataUser , assignCourse} = useAppStore();
+  const hasFetched = useRef(false);
   const [selectedCourse, setSelectedCourse] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [scheduleData, setScheduleData] = useState<ScheduleData>({
+    dia: 'Lunes',
+    horario: '6:00 PM - 8:00 PM',
+    grupo: 'A'
+  });
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+
+    (async () => {
       try {
-        // TODO: Replace with actual teacher ID from auth context or props
-        const teacherId = 1; // This should come from your auth context
-        const response = await getCourses(teacherId);
-        
-        if (response.Success && response.Data) {
-          setCourses(response.Data);
-        } else {
-          setError(response.Message || 'Error al cargar las materias');
-        }
-      } catch (err) {
-        setError('Error al conectar con el servidor');
-        console.error('Error fetching courses:', err);
-      } finally {
-        setLoading(false);
+        await getCourseWithoutAssign();
+      } catch (error) {
+        console.error('Error al cargar las materias:', error);
+        setError('Error al cargar las materias disponibles');
       }
-    };
+    })();
+  }, [getCourseWithoutAssign]);
 
-    fetchCourses();
-  }, []);
-
-  const handleCourseChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCourse(e.target.value);
+  const handleScheduleChange = (data: ScheduleData) => {
+    setScheduleData(data);
   };
 
   const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -45,48 +51,43 @@ const RegistrarClase = () => {
     }
 
     setIsSubmitting(true);
-    setError(null);
+    setError('');
 
     try {
-      // TODO: Replace with actual registration API call
-      console.log('Registering for course:', selectedCourse);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const courseData = newCourse.find(c => c.Codigo === selectedCourse);
       
-      // Show success message or redirect
-      alert('¡Registro exitoso!');
-      // Optionally reset form
-      // setSelectedCourse('');
+      if (!courseData) {
+        throw new Error('No se encontró la información de la materia seleccionada');
+      }
+      const registrationData: FormAssignCourse = {
+        ProfesorId: Number(dataUser?.Id_Profesor), 
+        CodigoMateria: selectedCourse,
+        Horario: `${scheduleData.dia} ${scheduleData.horario}`,
+        Grupo: scheduleData.grupo
+      };
+
+      await assignCourse(registrationData);
+      setSelectedCourse('');
+      
+      setScheduleData({
+        dia: 'Lunes',
+        horario: '6:00 PM - 8:00 PM',
+        grupo: 'A'
+      });
     } catch (err) {
-      console.error('Error al registrar:', err);
-      setError('Error al procesar el registro');
+      setError('Ocurrió un error al procesar la inscripción');
+      console.error('Error en el registro:', err);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-
-  if (error) {
-    return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-        <strong className="font-bold">Error: </strong>
-        <span className="block sm:inline">{error}</span>
-      </div>
-    );
-  }
+  
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Registrar Nueva Clase</h1>
-      
+
       <div className="mb-6">
         <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
           Seleccione una materia
@@ -94,32 +95,44 @@ const RegistrarClase = () => {
         <select
           id="subject"
           value={selectedCourse}
-          onChange={handleCourseChange}
+          onChange={(e) => setSelectedCourse(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          disabled={isSubmitting}
         >
           <option value="">-- Seleccione una materia --</option>
-          {courses.map((course) => (
-            <option 
-              key={`${course.CodigoMateria}-${course.Horario}`} 
-              value={course.CodigoMateria}
+          {newCourse.map((course) => (
+            <option
+              key={`${course.Codigo}-${course.Nombre}`}
+              value={course.Codigo}
             >
-              {course.NombreMateria} - {course.Horario} (Cupos: {course.CupoDisponible}/{course.CupoMaximo})
+              {course.Nombre} (Cupos: {course.Cupo_Disponible}/{course.Cupo_Maximo})
             </option>
           ))}
         </select>
       </div>
 
+      {error && (
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          {error}
+        </div>
+      )}
+
       {selectedCourse && (
-        <div className="mt-4 p-4 bg-blue-50 rounded-md">
-          <h3 className="text-lg font-medium text-blue-800">Información de la materia seleccionada</h3>
-          {courses
-            .filter(course => course.CodigoMateria === selectedCourse)
-            .map(course => (
-              <div key={course.CodigoMateria} className="mt-2">
-                <p><span className="font-medium">Código:</span> {course.CodigoMateria}</p>
-                <p><span className="font-medium">Profesor:</span> {course.NombreProfesor}</p>
-                <p><span className="font-medium">Horario:</span> {course.Horario}</p>
-                <p><span className="font-medium">Cupos disponibles:</span> {course.CupoDisponible} de {course.CupoMaximo}</p>
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          {newCourse
+            .filter((course) => course.Codigo === selectedCourse)
+            .map((course) => (
+              <div key={course.Codigo}>
+                <h3 className="text-lg font-semibold mb-2">Detalles de la materia</h3>
+                <p><span className="font-medium">Código:</span> {course.Codigo}</p>
+                <p><span className="font-medium">Nombre:</span> {course.Nombre}</p>
+                <p><span className="font-medium">Cupos disponibles:</span> {course.Cupo_Disponible} de {course.Cupo_Maximo}</p>
+                
+                <InscriptionCourseTeacher 
+                  onSelectionChange={handleScheduleChange}
+                  initialValues={scheduleData}
+                />
+                
                 <div className="mt-4">
                   <button
                     onClick={handleSubmit}

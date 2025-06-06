@@ -52,3 +52,40 @@ export type CoursesInscriptionDeleteResponse = {
     Errors: string[]
     ValidationErrors: {}
 }
+
+export type FormRegisterNewCourse = {
+    Codigo: string
+    Nombre: string
+    Descripcion: string
+    Creditos: number
+    Cupo_Maximo: number
+    Activa: boolean
+}
+
+export type ResponseCourseWithoutAssign = {
+    Data: CourseWithoutAssignData[]
+    Success: boolean
+    Message: string
+    Errors: string[]
+    ValidationErrors: {}
+}
+
+export type CourseWithoutAssignData = {
+    Id: number
+    Codigo: string
+    Nombre: string
+    Descripcion: string
+    Creditos: number
+    Cupo_Maximo: number
+    Activa: boolean
+    Creado_En: string
+    Cupo_Disponible: number
+}
+
+export type FormAssignCourse = {
+    ProfesorId: number,
+    CodigoMateria: string,
+    Horario: string,
+    Grupo: string
+}
+
