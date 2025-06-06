@@ -10,10 +10,8 @@ const StudentCourse = () => {
 
   const { classMatesStudents } = useAppStore()
   
-  // Filtrar los compañeros por el curso actual
   const currentClassMates = classMatesStudents.filter((student) => student.CodigoMateria === courseId)
   
-  // Obtener el nombre de la materia del primer compañero (si existe)
   const courseName = currentClassMates[0]?.Materia || 'Curso'
 
 
@@ -57,8 +55,9 @@ const StudentCourse = () => {
                     </span>
                   </div>
                   <div className="ml-4">
+                    <span className="text-sm text-gray-500">Matricula: {student.Matricula}</span>
                     <h3 className="text-sm font-medium text-gray-900">
-                      {student.NombreEstudiante}
+                      {student.NombreEstudiante} 
                     </h3>
                     <p className="text-sm text-gray-500">{student.Email}</p>
                   </div>

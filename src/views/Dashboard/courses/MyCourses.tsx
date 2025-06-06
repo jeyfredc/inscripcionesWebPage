@@ -51,7 +51,7 @@ const MyCourses = () => {
   };
 
   const onViewClass = async (codigoMateria: string) => {
-    await getClassMates(studentId || 0);
+    await getClassMates(studentId || 0, codigoMateria);
     navigate(`/dashboard/mis-materias/${codigoMateria}`);
   }
 

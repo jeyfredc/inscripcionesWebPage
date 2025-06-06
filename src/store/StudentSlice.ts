@@ -12,7 +12,7 @@ export type StudentSliceType = {
   getCoursesById: (id: number) => Promise<responseCourseByID>;
   coursesAssigned: CourseStudent[];
   classMatesStudents: ClassMate[];
-  getClassMates: (id: number) => Promise<ClassMatesResponse>;
+  getClassMates: (id: number, codigoMateria: string) => Promise<ClassMatesResponse>;
 }
 
 export const createStudentSlice: StateCreator<
@@ -65,9 +65,9 @@ export const createStudentSlice: StateCreator<
       utils.showAlert(false, response.Message);
       return response;
     },
-    getClassMates: async (id: number) => {
+    getClassMates: async (id: number, codigoMateria: string) => {
       const response = await utils.withErrorHandling(
-        () => getClassMatesById(id),
+        () => getClassMatesById(id, codigoMateria),
         'Error al cargar los compañeros'
       );
       

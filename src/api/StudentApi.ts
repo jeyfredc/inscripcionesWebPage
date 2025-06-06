@@ -59,9 +59,9 @@ export async function getCoursesById(studentId:number) {
   }
 }
 
-export async function getClassMatesById(studentId:number) {
+export async function getClassMatesById(studentId:number, codigoMateria:string) {
   try {
-    const url = `Student/getClassMatesByStudentId/${studentId}`;
+    const url = `Student/getClassMatesByStudentId/${studentId}/${codigoMateria}`;
     const { data } = await api.get<ApiResponse>(url);
     return data;
   } catch (error) {
