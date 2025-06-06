@@ -5,10 +5,10 @@ import { ToastContainer } from "react-toastify";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Menu from "./components/Menu/Menu";
 import Dashboard from "./views/Dashboard/Dashboard";
-import InscripcionMaterias from "./views/Dashboard/Inscripcion/InscripcionMaterias";
-import MisMaterias from "./views/Dashboard/materias/MisMaterias";
+import CoursesInscription from "./views/Dashboard/Inscripcion/CoursesInscription";
+import MyCourses from "./views/Dashboard/courses/MyCourses";
 import RegistroMaterias from "./views/Dashboard/Inscripcion/RegistroMaterias";
-import VerMaterias from "./views/Dashboard/materias/VerMaterias";
+import ViewCourses from "./views/Dashboard/courses/ViewCourses";
 import { useAppStore } from "./store/UseAppStore";
 import { RoleBasedRoute } from "./components/RoleBasedRoute";
 
@@ -41,14 +41,14 @@ export default function AppRouter() {
             }
           >
             <Route element={<RoleBasedRoute allowedRoles={['Estudiante']} />}>
-              <Route path="inscripcion" element={<InscripcionMaterias />} />
-              <Route path="mis-materias" element={<MisMaterias />} />
+              <Route path="inscripcion" element={<CoursesInscription />} />
+              <Route path="mis-materias" element={<MyCourses />} />
             </Route>
 
 
             <Route element={<RoleBasedRoute allowedRoles={['Profesor']} />}>
               <Route path="registro-clase" element={<RegistrarClase />} />
-              <Route path="ver-materias" element={<VerMaterias />} />
+              <Route path="ver-materias" element={<ViewCourses />} />
             </Route>
 
 

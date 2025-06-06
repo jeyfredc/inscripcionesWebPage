@@ -1,12 +1,10 @@
-// src/views/Dashboard/materias/VerMaterias.tsx
+
 import React, { useEffect } from 'react';
 import { useAppStore } from '../../../store/UseAppStore';
 
-const VerMaterias = () => {
+const ViewCourses = () => {
   
   const {coursesByTeacher, getCoursesByTeacher, dataUser} = useAppStore()
-
-console.log(coursesByTeacher);
 
   useEffect(() => {
     if(dataUser){
@@ -71,13 +69,13 @@ console.log(coursesByTeacher);
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm text-gray-500">
-                    {materia.CupoMaximo}/{materia.CupoDisponible} 
+                    {materia.CupoDisponible}/{materia.CupoMaximo} 
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    ${materia.CupoMaximo === materia.CupoDisponible ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                    {materia.CupoMaximo === materia.CupoDisponible ? 'Activa' : 'Llena'}
+                    ${cupoMateria(materia.CupoMaximo, materia.CupoDisponible) === 'Activa' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    {cupoMateria(materia.CupoMaximo, materia.CupoDisponible)}
                   </span>
                 </td>
 
@@ -90,4 +88,4 @@ console.log(coursesByTeacher);
   );
 };
 
-export default VerMaterias;
+export default ViewCourses;

@@ -1,7 +1,7 @@
 // src/views/Dashboard/materias/MisMaterias.tsx
 import React from 'react';
 
-const MisMaterias = () => {
+const MyCourses = () => {
   // Datos de ejemplo - reemplazar con llamada a API
   const misMaterias = [
     { id: '1', nombre: 'Matemáticas', horario: 'Lunes 8:00 - 10:00', profesor: 'Dr. Pérez' },
@@ -39,4 +39,4 @@ const MisMaterias = () => {
   );
 };
 
-export default MisMaterias;
+export default MyCourses;

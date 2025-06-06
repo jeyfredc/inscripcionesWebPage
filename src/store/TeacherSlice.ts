@@ -1,11 +1,13 @@
 
 import type { StateCreator } from "zustand";
 import { getCourses } from "../api/ProfesorApi";
+import { ApiResponse } from "../types/api";
+import { TeacherResponseData } from "../types/Teacher";
 
 
 export type TeacherSliceType = {
-    coursesByTeacher: any[]
-    getCoursesByTeacher: (id:number) => Promise<void>
+    coursesByTeacher: TeacherResponseData[]
+    getCoursesByTeacher: (id: number) => Promise<ApiResponse<TeacherResponseData[]>>
 }
 
 export const createTeacherSlice: StateCreator<TeacherSliceType> = (set, get) => ({
@@ -18,6 +20,7 @@ export const createTeacherSlice: StateCreator<TeacherSliceType> = (set, get) => 
             }else{
                 set({coursesByTeacher: []})
             }
+            return response
     }
 
 })

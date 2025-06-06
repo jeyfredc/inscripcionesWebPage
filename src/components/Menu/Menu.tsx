@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+
 import { useAppStore } from '../../store/UseAppStore';
 
 const Menu = () => {
-  const { onLogout, dataUser } = useAppStore();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { onLogout, dataUser, creditStudent } = useAppStore();
+
+
+
 
   return (
     <header className="bg-slate-950 shadow-sm sticky top-0 z-10">
@@ -27,7 +28,8 @@ const Menu = () => {
                 <div className="font-medium">{dataUser?.Nombre}</div>
                 {dataUser?.Rol === 'Estudiante' && (
                   <div className="text-xs text-gray-300">
-                    Créditos: <b>{dataUser?.Creditos_Disponibles || 0}</b>
+                    Créditos: <b>{creditStudent ?? 'Cargando...'}</b>
+
                   </div>
                 )}
               </div>
@@ -38,7 +40,8 @@ const Menu = () => {
           <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-2 md:space-x-4">
             {dataUser?.Rol === 'Estudiante' && (
               <span className="text-white text-sm bg-blue-900/50 px-3 py-1 rounded-full">
-                Créditos: <b>{dataUser?.Creditos_Disponibles || 0}</b>
+                Créditos: <b>{creditStudent ?? 'Cargando...'}</b>
+
               </span>
             )}
 
@@ -87,65 +90,37 @@ const Menu = () => {
                   d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                 />
               </svg>
-              <span className="hidden md:inline ml-1">Salir</span>
+              <span className="">Salir</span>
             </button>
           </div>
 
-          {/* Botón móvil - Menú hamburguesa */}
-          <div className="flex items-center sm:hidden">
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-slate-800 focus:outline-none"
-              aria-expanded="false"
-            >
-              <span className="sr-only">Abrir menú principal</span>
-              {isMobileMenuOpen ? (
+          {/* Botón de Cerrar sesión en móvil */}
+          <div className="absolute right-0 mt-3 mr-2  w-40 rounded-md bg-red-900 ring-1 focus:outline-none sm:hidden z-50">
+            <div className="bg-red-700" >
+              <button
+                onClick={onLogout}
+                className="flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-red-700 hover:text-white"
+              >
                 <svg
-                  className="block h-6 w-6"
-                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5 mr-2"
                   fill="none"
-                  viewBox="0 0 24 24"
                   stroke="currentColor"
-                  aria-hidden="true"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                   />
                 </svg>
-              ) : (
-                <div className="bg-red-700" >
-                <button
-                  onClick={onLogout}
-                  className="flex items-center w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:bg-red-700 hover:text-white"
-                >
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    />
-                  </svg>
-                  Cerrar sesión
-                </button>
-                </div>
-
-              )}
-            </button>
+                Cerrar sesión
+              </button>
+            </div>
           </div>
         </div>
       </div>
-
-
     </header>
   );
 };

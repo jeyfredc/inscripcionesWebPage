@@ -2,14 +2,13 @@
 import { isAxiosError } from "axios";
 import api from "../lib/axios";
 import { ApiResponse } from "../types/api";
-import { TeacherResponse, TeacherResponseData } from "../types/Teacher";
 
-  
 
-export async function getCourses(id:number):Promise<ApiResponse<TeacherResponseData[]>> {
+
+export async function getCredits(id:number) {
   try {
-    const url = `Teacher/assigned-courses/${id}`;
-    const { data } = await api.get<ApiResponse<TeacherResponseData[]>>(url);
+    const url = `Student/credits/${id}`;
+    const { data } = await api.get<ApiResponse>(url);
     return data;
   } catch (error) {
     if (isAxiosError(error)) {
