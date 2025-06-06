@@ -3,6 +3,7 @@ import { authenticateUser, createAccount } from "../api/AuthApi";
 import type { StateCreator } from "zustand";
 import { toast } from "react-toastify";
 import type { UserLoginForm, UserRegistrationForm, UserResponse, UserResponseData } from "../types/User";
+import { AppStore } from "./UseAppStore";
 
 
 export type UserSliceType = {
@@ -17,6 +18,17 @@ export type UserSliceType = {
     resetSuccessCreateUser: () => void
 
 }
+
+const getCurrentUser = () => {
+    try {
+      const userData = localStorage.getItem('DATA_USER');
+      return userData ? JSON.parse(userData) : null;
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      return null;
+    }
+  };
+  
 
 export const createUserSlice: StateCreator<
     UserSliceType,
@@ -60,7 +72,12 @@ export const createUserSlice: StateCreator<
                 set({ isAuthenticated: true })
                 localStorage.setItem('AUTH_TOKEN', response.Data.Token)
                 localStorage.setItem('DATA_USER', JSON.stringify(response.Data))
-
+            const user = getCurrentUser();
+            const store = get() as unknown as AppStore;
+            
+            if (user?.Rol === 'Estudiante' && user?.Id && store.getCredits) {
+              await store.getCredits(user.Id);
+            }
                 return response
             }
 
