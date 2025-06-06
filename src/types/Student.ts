@@ -27,3 +27,21 @@ export type CourseStudent = {
     Horario: string,
     FehaInscripcion: string
 }
+
+
+export type ClassMatesResponse = {
+    Data: ClassMate[],
+    Success: boolean,
+    Message: string,
+    Errors: string[],
+    ValidationErrors: {}
+}
+
+
+export type ClassMate = {
+    CodigoMateria: string,
+    Materia: string,
+    NombreEstudiante: string,
+    Email: string,
+    Matricula: string
+}

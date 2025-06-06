@@ -1,13 +1,15 @@
 // src/views/Dashboard/materias/MisMaterias.tsx
 import React, { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../../store/UseAppStore';
+import { useNavigate } from 'react-router-dom';
 
 const MyCourses = () => {
 
 
   const hasFetched = useRef(false);
 
-  const { getCoursesById, studentId, coursesAssigned, deleteCourses } = useAppStore();
+  const { getCoursesById, studentId, coursesAssigned, deleteCourses, getClassMates } = useAppStore();
+  const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +50,11 @@ const MyCourses = () => {
     }
   };
 
+  const onViewClass = async (codigoMateria: string) => {
+    await getClassMates(studentId || 0);
+    navigate(`/dashboard/mis-materias/${codigoMateria}`);
+  }
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Mis Materias Inscritas</h1>
@@ -62,9 +69,17 @@ const MyCourses = () => {
                     <p className="text-sm text-gray-500">{materia.Horario}</p>
                     <p className="text-sm text-gray-500">Profesor: {materia.Profesor}</p>
                   </div>
+                  <div className="flex gap-2">
                   <button className="text-red-600 hover:text-red-800 text-sm font-medium" onClick={() => onRemoveCourse(materia.Codigomateria)}>
                     Dar de baja
                   </button>
+                  <button 
+                    className="text-blue-600 hover:text-blue-800 text-sm font-medium" 
+                    onClick={() => onViewClass(materia.Codigomateria)}
+                  >
+                    Grupo clase
+                  </button>
+                  </div>
                 </div>
               </li>
             ))

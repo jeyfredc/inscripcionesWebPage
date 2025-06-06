@@ -1,6 +1,6 @@
 import type { StateCreator } from "zustand";
-import { getCoursesById, getCredits } from "../api/StudentApi";
-import { CourseStudent, responseCourseByID } from "../types/Student";
+import { getClassMatesById, getCoursesById, getCredits } from "../api/StudentApi";
+import { ClassMate, ClassMatesResponse, CourseStudent, responseCourseByID } from "../types/Student";
 import { getStoreUtils } from "./StoreUtils";
 
 export type StudentSliceType = {
@@ -11,6 +11,8 @@ export type StudentSliceType = {
   studentId: number | null;
   getCoursesById: (id: number) => Promise<responseCourseByID>;
   coursesAssigned: CourseStudent[];
+  classMatesStudents: ClassMate[];
+  getClassMates: (id: number) => Promise<ClassMatesResponse>;
 }
 
 export const createStudentSlice: StateCreator<
@@ -25,8 +27,8 @@ export const createStudentSlice: StateCreator<
     creditStudent: null,
     isLoadingCredits: false,
     studentId: JSON.parse(localStorage.getItem('StudentId') || 'null'),
-
     coursesAssigned: [],
+    classMatesStudents: [],
 
     getCredits: async (id: number) => {
       set({ isLoadingCredits: true });
@@ -60,6 +62,16 @@ export const createStudentSlice: StateCreator<
       );
       
       set({ coursesAssigned: response.Data });
+      utils.showAlert(false, response.Message);
+      return response;
+    },
+    getClassMates: async (id: number) => {
+      const response = await utils.withErrorHandling(
+        () => getClassMatesById(id),
+        'Error al cargar los compañeros'
+      );
+      
+      set({ classMatesStudents: response.Data });
       utils.showAlert(false, response.Message);
       return response;
     }

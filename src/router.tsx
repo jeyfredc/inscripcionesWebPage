@@ -13,6 +13,7 @@ import { RoleBasedRoute } from "./components/RoleBasedRoute";
 import NotFound from "./views/NotFound/NotFound";
 import ViewAdmin from "./views/Dashboard/Admin/ViewAdmin";
 import RegistrarClase from "./views/Dashboard/Inscripcion/RegistrarClase";
+import StudentCourse from "./views/Dashboard/courses/StudentCourse";
 
 
 export default function AppRouter() {
@@ -24,8 +25,6 @@ export default function AppRouter() {
   return (
     <>
       <>
-
-
         <Routes>
           <Route path="/" element={<Login />} index />
           <Route path="/register" element={<Registro />} />
@@ -41,6 +40,7 @@ export default function AppRouter() {
             <Route element={<RoleBasedRoute allowedRoles={['Estudiante']} />}>
               <Route path="inscripcion" element={<CoursesInscription />} />
               <Route path="mis-materias" element={<MyCourses />} />
+              <Route path="mis-materias/:courseId" element={<StudentCourse />} />
             </Route>
 
 
