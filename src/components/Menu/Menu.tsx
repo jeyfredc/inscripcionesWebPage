@@ -28,7 +28,7 @@ const Menu = () => {
                 <div className="font-medium">{dataUser?.Nombre}</div>
                 {dataUser?.Rol === 'Estudiante' && (
                   <div className="text-xs text-gray-300">
-                    Créditos: <b>{creditStudent ?? 'Cargando...'}</b>
+                    Créditos: <b>{dataUser?.Creditos_Disponibles ?? 'Cargando...'}</b>
 
                   </div>
                 )}
@@ -40,7 +40,7 @@ const Menu = () => {
           <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-2 md:space-x-4">
             {dataUser?.Rol === 'Estudiante' && (
               <span className="text-white text-sm bg-blue-900/50 px-3 py-1 rounded-full">
-                Créditos: <b>{creditStudent ?? 'Cargando...'}</b>
+                Créditos: <b>{dataUser.Creditos_Disponibles ?? 'Cargando...'}</b>
 
               </span>
             )}

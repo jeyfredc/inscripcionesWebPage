@@ -8,7 +8,7 @@ const MyCourses = () => {
 
   const hasFetched = useRef(false);
 
-  const { getCoursesById, studentId, coursesAssigned, deleteCourses, getClassMates } = useAppStore();
+  const { getCoursesById, dataUser, coursesAssigned, deleteCourses, getClassMates } = useAppStore();
   const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -22,7 +22,7 @@ const MyCourses = () => {
     (async () => {
       setIsLoading(true);
       try {
-        const response = await getCoursesById(studentId || 0);
+        const response = await getCoursesById(dataUser!.Id_Estudiante);
         if (!response.Success) {
           setError('No se pudieron cargar las materias disponibles');
           console.error('Error al cargar materias:', response.Message);
@@ -34,14 +34,14 @@ const MyCourses = () => {
         setIsLoading(false);
       }
     })();
-  }, [getCoursesById, studentId]);
+  }, [getCoursesById, dataUser]);
 
 
   const onRemoveCourse = async (codigoMateria: string) => {
     try {
       await deleteCourses([
         {
-          IdEstudiante: studentId || 0,
+          IdEstudiante: dataUser!.Id_Estudiante,
           CodigoMateria: codigoMateria
         }
       ]);
@@ -51,7 +51,7 @@ const MyCourses = () => {
   };
 
   const onViewClass = async (codigoMateria: string) => {
-    await getClassMates(studentId || 0, codigoMateria);
+    await getClassMates(dataUser!.Id_Estudiante, codigoMateria);
     navigate(`/dashboard/mis-materias/${codigoMateria}`);
   }
 

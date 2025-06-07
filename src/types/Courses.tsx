@@ -88,3 +88,39 @@ export type FormAssignCourse = {
     Horario: string,
     Grupo: string
 }
+
+
+export type CoursesAndSchedules = {
+    Data: CoursesAndSchedulesData[]
+    Success: boolean
+    Message: string
+    Errors: string[]
+    ValidationErrors: {}
+}
+    
+    
+export type CoursesAndSchedulesData = {
+    Id: number,
+    Codigo: string,
+    Materia: string,
+    Descripcion: string,
+    Creditos: number,
+    Cupo_Maximo: number,
+    Cupo_Disponible: number,
+    Profesor_Asignado: string,
+    ProfesorId:number,
+    Horarios: string
+}
+
+export type FormUpdateSubject= {
+    MateriaId: number,
+    Codigo: string,
+    Nombre: string,
+    Descripcion: string,
+    Creditos: number,
+    Cupo_Maximo: number,
+    Horarios: string
+}
+
+
+

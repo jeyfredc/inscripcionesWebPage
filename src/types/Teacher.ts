@@ -18,3 +18,9 @@ export type TeacherResponse = {
     Errors: string[]
     ValidationErrors: {}
 }
+
+
+export type RequestUnassignTeacher = {
+    ProfesorId: number,
+    CodigoMateria: string
+}

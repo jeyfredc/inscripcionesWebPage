@@ -9,7 +9,6 @@ import { AppStore } from "./UseAppStore";
 export type UserSliceType = {
     authToken: string | null
     dataUser: UserResponseData | null
-    profesorId:number
     createUser: (createUserForm: UserRegistrationForm) => Promise<void>
     loginUser: (loginUserForm: UserLoginForm) => Promise<UserResponse>
     successCreateUser: boolean
@@ -36,7 +35,6 @@ export const createUserSlice: StateCreator<
         authToken: localStorage.getItem('AUTH_TOKEN') || null,
         isAuthenticated: !!localStorage.getItem('AUTH_TOKEN'),
         successCreateUser: false,
-        profesorId: Number(localStorage.getItem('Id_Profesor')),
         createUser: async (createUserForm: UserRegistrationForm) => {
             const response = await createAccount(createUserForm)
 
@@ -66,8 +64,6 @@ export const createUserSlice: StateCreator<
                 set({ isAuthenticated: true })
                 localStorage.setItem('AUTH_TOKEN', response.Data.Token)
                 localStorage.setItem('DATA_USER', JSON.stringify(response.Data))
-                localStorage.setItem('Id_Profesor', response.Data.profesorId.toString())
-                set({ profesorId: response.Data.profesorId })
             const store = get() as unknown as AppStore;
             
             if (response.Data?.Rol === 'Estudiante' && response.Data?.Id) {

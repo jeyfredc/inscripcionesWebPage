@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '../../../store/UseAppStore';
 import { CourseInscription } from '../../../types/Courses';
+import Warning from '../../../components/Warning/Warning';
 
 const CoursesInscription = () => {
   const { getCoursesAvailable, availableCourses, dataUser,creditStudent , inscriptionCourses} = useAppStore();
@@ -11,7 +12,7 @@ const CoursesInscription = () => {
 
   const hasFetched = useRef(false);
 
-  // Cargar materias disponibles al montar el componente
+
   useEffect(() => {
     if (hasFetched.current) return;
     
@@ -43,12 +44,10 @@ const CoursesInscription = () => {
     });
   
     setFormCourses(prev => {
-      // Si ya existe, lo eliminamos
       if (prev.some(item => item.CodigoMateria === codigoMateria)) {
         return prev.filter(item => item.CodigoMateria !== codigoMateria);
       }
   
-      // Si no existe, lo agregamos
       return [
         ...prev,
         {
@@ -110,9 +109,7 @@ const CoursesInscription = () => {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Inscripción de Materias</h1>
       {creditStudent ===1 &&
-                  <div className="ml-3 flex items-center bg-red-50 border-l-4 border-red-500 p-4">
-                  <p className="text-sm text-red-700 font-semibold">Lo sentimos, ya no puedes inscribirte en más materias ya que no tienes créditos disponibles</p>
-                </div>
+        <Warning message="Lo sentimos, ya no puedes inscribirte en más materias ya que no tienes créditos disponibles" type="error" />
       }
       <div className="bg-white p-6 rounded-lg shadow">
         {availableCourses.length === 0 ? (
