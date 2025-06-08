@@ -95,10 +95,12 @@ export const createCourseSlice: StateCreator<
 
   deleteCourses: async (courses: CorseDeleteData[]) => {
     return utils.withErrorHandling(async () => {
+      const appStore = utils.getAppStore();
       const response = await deleteCourses(courses);
       
       if (response.Data) {
         utils.showAlert(false, response.Data.Message);
+        await appStore.getCoursesAvailable?.();
       } else {
         utils.showAlert(true, response.Data?.Message || "Error al eliminar los cursos");
       }
@@ -110,7 +112,6 @@ export const createCourseSlice: StateCreator<
         const studentId = localStorage.getItem('Id_Estudiante');
         console.log(studentId);
         
-        const appStore = utils.getAppStore();
         if (appStore.getCoursesById && studentId) {
           await appStore.getCoursesById(Number(studentId));
         }
