@@ -11,7 +11,7 @@ const initialState: UserLoginForm = {
 }
 
 const FormLogin = () => {
-    const { loginUser, isAuthenticated ,printAlert} = useAppStore();
+    const { loginUser, isAuthenticated } = useAppStore();
     const [form, setForm] = useState(initialState);
     const navigate = useNavigate();
 
