@@ -69,7 +69,7 @@ El unico que puede ingresar como administrador es el usuario que se registro com
 
 ## 🛠️ Tecnologías Utilizadas
 
-- **Frontend**: React, TypeScript, Vite, Zustand, React Router, React Icons, React Toastify, Tailwind CSS
+- **Frontend**: React, TypeScript, Vite, Zustand, React Router, React Icons, React Toastify, Tailwind CSS, React Query
 - **Backend**: [.Net 8 ]
 - **Base de Datos**: [SQLSERVER]
 - **Autenticación**: [JWT]
