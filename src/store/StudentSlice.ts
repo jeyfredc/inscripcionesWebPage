@@ -24,9 +24,9 @@ export const createStudentSlice: StateCreator<
   const utils = getStoreUtils({ get, set, api });
   
   return {
-    creditStudent: null,
+    creditStudent: JSON.parse(localStorage.getItem('StudentData') || 'null')?.CreditosDisponibles,
     isLoadingCredits: false,
-    studentId: JSON.parse(localStorage.getItem('StudentId') || 'null'),
+    studentId: JSON.parse(localStorage.getItem('StudentData') || 'null')?.EstudianteId,
     coursesAssigned: [],
     classMatesStudents: [],
 
@@ -43,7 +43,7 @@ export const createStudentSlice: StateCreator<
             creditStudent: response.Data.CreditosDisponibles,
             studentId: response.Data.EstudianteId
           });
-          localStorage.setItem('StudentId', response.Data.EstudianteId.toString());
+          localStorage.setItem('StudentData', JSON.stringify(response.Data));
         } else {
           set({ creditStudent: null });
           utils.showAlert(true, 'No se pudieron cargar los créditos');
