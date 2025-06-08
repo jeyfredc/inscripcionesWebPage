@@ -72,7 +72,6 @@ const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => 
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault()
-      console.log(formState)
       if(formState.Password !== confirmPassword){
         return
       }

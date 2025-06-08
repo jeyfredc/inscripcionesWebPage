@@ -1,4 +1,3 @@
-// src/components/Dashboard/MenuItem.tsx
 import { Link } from 'react-router-dom';
 
 const MenuItem = ({ to, icon, text }: { to: string; icon: React.ReactNode; text: string }) => {

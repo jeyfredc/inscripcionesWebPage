@@ -50,7 +50,6 @@ export const createUserSlice: StateCreator<
         },
         loginUser: async (loginUserForm: UserLoginForm): Promise<UserResponse> => {
             const response = await authenticateUser(loginUserForm)
-            console.log(response);
 
             if (response.Data === null) {
                 get().printAlert(true, response.Errors[0])

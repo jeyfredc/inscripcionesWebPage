@@ -1,4 +1,3 @@
-// src/components/RoleBasedRoute.tsx
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAppStore } from '../store/UseAppStore';
 
@@ -18,4 +17,4 @@ export const RoleBasedRoute = ({ allowedRoles }: RoleBasedRouteProps) => {
   }
 
   return <Outlet />;
-};
+};  

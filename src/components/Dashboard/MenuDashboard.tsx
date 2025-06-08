@@ -17,12 +17,9 @@ const MenuDashboard = ({ children }: { children: React.ReactNode }) => {
     }
   });
 
-  // Cerrar menú móvil al cambiar de ruta
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location.pathname]);
-
-  // Manejar cambio de tamaño de pantalla
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768) {
@@ -36,7 +33,6 @@ const MenuDashboard = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div className="flex h-screen bg-gray-100 overflow-hidden">
-      {/* Overlay para móvil */}
       {isMobileMenuOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
@@ -44,7 +40,6 @@ const MenuDashboard = ({ children }: { children: React.ReactNode }) => {
         ></div>
       )}
 
-      {/* Menú lateral - Desktop */}
       <div className={`fixed md:relative z-30 transform ${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       } md:translate-x-0 transition-transform duration-300 ease-in-out w-64 h-full bg-white shadow-lg flex-shrink-0`}>
@@ -162,10 +157,7 @@ const MenuDashboard = ({ children }: { children: React.ReactNode }) => {
         </nav>
       </div>
 
-      {/* Contenido principal */}
       <div className="flex-1 flex flex-col overflow-hidden w-full">
-        {/* Botón de menú móvil */}
-
         <Menu />
         <div className="md:hidden bg-white shadow-sm border-b border-gray-200">
           <button

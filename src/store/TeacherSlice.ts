@@ -24,7 +24,6 @@ export const createTeacherSlice: StateCreator<
     coursesByTeacher: [],
     getCoursesByTeacher: async (id:number) => {
         const response = await getCourses(id)
-        console.log(response);
             if(response.Data){
                 set({coursesByTeacher: response.Data})
             }else{
@@ -34,7 +33,6 @@ export const createTeacherSlice: StateCreator<
     },
     postUnassignTeacher: async (formTeacher:RequestUnassignTeacher) => {
         const response = await PostUnassignTeacher(formTeacher)
-        console.log(response);
         if(response.Data?.Success){
             utils.showAlert(false, response.Message)
             utils.getAppStore().getCoursesAndSchedules()

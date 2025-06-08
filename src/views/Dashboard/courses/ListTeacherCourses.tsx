@@ -1,4 +1,3 @@
-import React, { useEffect, useRef, useState } from 'react';
 import {
   PencilIcon,
   TrashIcon,
@@ -10,257 +9,39 @@ import {
   UserMinusIcon
 } from '@heroicons/react/24/outline';
 import { useAppStore } from '../../../store/UseAppStore';
-import { CoursesAndSchedulesData, FormUpdateSubject } from '../../../types/Courses';
 import { Tooltip } from 'react-tooltip';
 import Warning from '../../../components/Warning/Warning';
-import { getStoreUtils } from '../../../store/StoreUtils';
-import api from '../../../lib/axios';
-import { RequestUnassignTeacher } from '../../../types/Teacher';
-/* import Warning from '../../../components/Warning/Warning';
- */
+import { useListTeacherCourses } from '../../../hooks/useListTeacherCourses';
+import { useEffect } from 'react';
+import ButtonAction from '../../../components/courses/ButtonAction/ButtonAction';
+import NavPagination from '../../../components/courses/Pagination/NavPagination';
+
 
 
 const ITEMS_PER_PAGE = 8;
 
-interface ValidationErrors {
-  [key: string]: string;
-}
 
 
 const ListTeacherCourses = () => {
 
-  const { coursesAndSchedules, getCoursesAndSchedules, printAlert, postUnassignTeacher, deleteSubject, updateSubject } = useAppStore()
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const hasFetched = useRef(false);
-
-  const totalPages = Math.ceil(coursesAndSchedules.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedData = coursesAndSchedules.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [formData, setFormData] = useState<Record<number, Partial<CoursesAndSchedulesData>>>({});
-
-
-  const validateField = (name: string, value: any): string => {
-    switch (name) {
-      case 'Codigo':
-        if (!value || value.trim() === '') return 'El código es requerido';
-        if (value.length > 6) return 'El código no puede tener más de 6 caracteres';
-        return '';
-
-      case 'Materia':
-        if (!value || value.trim() === '') return 'La materia es requerida';
-        return '';
-        
-      default:
-        return ''; // Default return for any other field names
-
-      case 'Creditos':
-        const creditos = Number(value);
-        if (isNaN(creditos) || creditos <= 0) return 'Los créditos deben ser un número positivo';
-        if (creditos > 10) return 'Máximo 10 créditos';
-        return '';
-
-      case 'Cupo_Maximo':
-        const cupo = Number(value);
-        if (isNaN(cupo) || cupo <= 0) return 'El cupo debe ser un número positivo';
-        // Validar que el cupo no sea menor al cupo disponible actual
-        const cursoActual = coursesAndSchedules.find(c => c.Id === editingId);
-        if (cursoActual!.Cupo_Disponible < cursoActual!.Cupo_Maximo) {
-          return 'No se pueder reducir el cupo porque hay estudiantes inscritos';
-        }
-        return '';
-
-      case 'Horarios':
-        // Si el campo está vacío, mostrar error
-        if (!value || value.trim() === '') {
-          return 'Los horarios son requeridos';
-        }
-
-        const diasValidos = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes'];
-        const diaIngresado = value.split(' ')[0].toLowerCase();
-
-        if (!diasValidos.includes(diaIngresado)) {
-          return 'Día inválido. Use: Lunes, Martes, Miércoles, Jueves o Viernes';
-        }
-
-        if (!value.includes(' a ') || !value.includes(':')) {
-          return '';
-        }
-
-        try {
-          const horarioRegex = /^(Lunes|Martes|Miércoles|Jueves|Viernes)\s+(?:de\s+)?(\d{1,2}):(\d{2})\s+a\s+(\d{1,2}):(\d{2})$/i;
-          const match = value.match(horarioRegex);
-
-          if (!match) {
-            return 'Formato: "Lunes de 18:00 a 20:00"';
-          }
-
-          const [, dia, horaInicio, minutoInicio, horaFin, minutoFin] = match;
-          const inicio = parseInt(horaInicio, 10) + parseInt(minutoInicio, 10) / 60;
-          const fin = parseInt(horaFin, 10) + parseInt(minutoFin, 10) / 60;
-
-          if (inicio < 18 || fin > 20 || inicio >= fin) {
-            return 'Horario: 18:00 a 20:00';
-          }
-        } catch (e) {
-          return 'Formato inválido';
-        }
-        return '';
-    }
-  };
-
-  const [errors, setErrors] = useState<Record<number, ValidationErrors>>({});
-
-  const handleInputChange = (id: number, field: string, value: string | number) => {
-    const error = validateField(field, value);
-
-    setErrors(prev => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        [field]: error
-      }
-    }));
-
-    if (!error) {
-      setFormData(prev => {
-        const currentData = coursesAndSchedules.find(c => c.Id === id);
-        if (!currentData) return prev;
-        const newData = {
-          [id]: {
-            ...currentData,
-            ...prev[id],
-            [field]: typeof value === 'number' ? Number(value) : value
-          }
-        };
-
-        if (field === 'Cupo_Maximo' && currentData.Cupo_Disponible === currentData.Cupo_Maximo) {
-          newData[id].Cupo_Disponible = Number(value);
-        }
-
-        return newData;
-      });
-    }
-  };
-
-
-  useEffect(() => {
-    if (hasFetched.current) return;
-
-    hasFetched.current = true;
-
-    (async () => {
-
-      try {
-        const response = await getCoursesAndSchedules();
-        if (!response.Success) {
-          console.error('Error al cargar materias:', response.Message);
-        }
-      } catch (err) {
-        console.error('Error inesperado:', err);
-      }
-    })();
-  }, [getCoursesAndSchedules]);
-
-  const goToPage = (page: number) => {
-    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
-  };
-
-  const handleEdit = (id: number) => {
-    const course = coursesAndSchedules.find(c => c.Id === id);
-    if (course!.Cupo_Disponible < course!.Cupo_Maximo) {
-      printAlert(true, 'No se puede editar porque hay estudiantes inscritos');
-      return;
-    }
-    setEditingId(id);
-    if (course) {
-      setFormData(prev => ({
-        ...prev,
-        [id]: { ...course }
-      }));
-    }
-  };
-
-  const handleDeleteSubject = (id: number) => {
-    const course = coursesAndSchedules.find(c => c.Id === id);
-    if (course!.Cupo_Disponible < course!.Cupo_Maximo) {
-      printAlert(true, 'No se puede eliminar porque hay estudiantes inscritos');
-      return;
-    }
-    if (course!.Profesor_Asignado !== null) {
-      printAlert(true, 'No se puede eliminar porque tiene un profesor asignado');
-      return;
-    }
-
-    deleteSubject(course!.Codigo);
-
-  };
-
-  const getPageNumbers = () => {
-    const pageNumbers = [];
-    const maxVisiblePages = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-    let endPage = startPage + maxVisiblePages - 1;
-
-    if (endPage > totalPages) {
-      endPage = totalPages;
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(i);
-    }
-
-    return pageNumbers;
-  };
-
-  const handleConfirm = async (id: number) => {
-    const courseToSave = formData[id];
-    if (!courseToSave) return;
-
-
-
-    try {
-
-      setEditingId(null);
-      setFormData({});
-      const formUpdateSubject: FormUpdateSubject = {
-        MateriaId: Number(courseToSave.Id),
-        Codigo: courseToSave.Codigo!,
-        Nombre: courseToSave.Materia!,
-        Descripcion: courseToSave.Descripcion!,
-        Creditos: Number(courseToSave.Creditos),
-        Cupo_Maximo: Number(courseToSave.Cupo_Maximo),
-        Horarios: courseToSave.Horarios || ''
-      }
-
-      updateSubject(formUpdateSubject);
-
-    } catch (error) {
-      console.error('Error al guardar los cambios:', error);
-      alert('Ocurrió un error al guardar los cambios');
-    }
-  };
-
-  const onDeleteTeacher = async (id: number) => {
-    const course = coursesAndSchedules.find(c => c.Id === id);
-
-    if (course!.Cupo_Disponible < course!.Cupo_Maximo) {
-      printAlert(true, 'No se puede desasignar porque hay estudiantes inscritos');
-      return;
-
-    }
-    const formRequesUnassignTeacher: RequestUnassignTeacher = {
-      ProfesorId: course!.ProfesorId,
-      CodigoMateria: course!.Codigo
-    }
-
-    postUnassignTeacher(formRequesUnassignTeacher);
-
-
-  };
-
+  const { coursesAndSchedules } = useAppStore();
+  
+  const {
+    currentPage,
+    editingId,
+    formData,
+    errors,
+    startIndex,
+    totalPages,
+    paginatedData,
+    goToPage,
+    handleInputChange,
+    handleEdit,
+    handleDeleteSubject,
+    handleSave,
+    handleUnassignTeacher,
+    getPageNumbers
+  } = useListTeacherCourses();
 
 
   return (
@@ -353,31 +134,14 @@ const ListTeacherCourses = () => {
                         type="text"
                         name="Horarios"
                         value={formData[course.Id]?.Horarios || course.Horarios || ''}
-                        onChange={(e) => {
-                          setFormData(prev => ({
-                            ...prev,
-                            [course.Id]: {
-                              ...prev[course.Id],
-                              Horarios: e.target.value
-                            }
-                          }));
-                        }}
-                        onBlur={(e) => {
-                          const error = validateField('Horarios', e.target.value);
-                          setErrors(prev => ({
-                            ...prev,
-                            [course.Id]: {
-                              ...prev[course.Id],
-                              Horarios: error
-                            }
-                          }));
-                        }}
+                        onChange={(e) => handleInputChange(course.Id, 'Horarios', e.target.value)}
+                        onBlur={(e) => handleInputChange(course.Id, 'Horarios', e.target.value)}
                         disabled={editingId !== course.Id}
                         className={`
-        w-full
-        ${editingId === course.Id ? 'border rounded p-1' : 'bg-transparent border-none'}
-        ${errors[course.Id]?.Horarios ? 'border-red-500' : ''}
-      `}
+                          w-full
+                          ${editingId === course.Id ? 'border rounded p-1' : 'bg-transparent border-none'}
+                          ${errors[course.Id]?.Horarios ? 'border-red-500' : ''}
+                        `}
                         placeholder="Ej: Lunes de 18:00 a 20:00"
                       />
                       {errors[course.Id]?.Horarios && (
@@ -390,52 +154,27 @@ const ListTeacherCourses = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
 
                     {editingId === course.Id ? (
-                      <button
-                        data-tooltip-id="confirm-tooltip"
-                        data-tooltip-content="Confirmar"
-                        onClick={() => handleConfirm(course.Id)}
-                        className="text-green-600 hover:text-green-900 mr-4"
-                        title="Confirmar"
-                      >
-                        <CheckIcon className="h-5 w-5" />
-                      </button>
+                      <ButtonAction
+                        variant="confirm"
+                        onClick={() => handleSave(course.Id)}
+                      />
                     ) : (
-                      <button
-                        data-tooltip-id="edit-tooltip"
-                        data-tooltip-content="Editar"
+                      <ButtonAction
+                        variant="edit"
                         onClick={() => handleEdit(course.Id)}
-                        className="text-indigo-600 hover:text-indigo-900 mr-4"
-                        title="Editar"
-                      >
-                        <PencilIcon className="h-5 w-5" />
-                      </button>
+                      />
                     )}
 
-                    <button
-                      onClick={() => onDeleteTeacher(course.Id)}
-                      data-tooltip-id="unassign-tooltip"
-                      data-tooltip-content="Eliminar asignación de profesor"
-                      className="text-yellow-600 hover:text-yellow-800 mr-2"
+                    <ButtonAction
+                      variant="unassign"
+                      onClick={() => handleUnassignTeacher(course.Id)}
                       disabled={!course.Profesor_Asignado}
-                    >
-                      <UserMinusIcon className="h-5 w-5" />
-                    </button>
+                    />
 
-                    {/* Botón para eliminar la materia */}
-                    <Tooltip id="unassign-tooltip" />
-
-                    <Tooltip id="confirm-tooltip" />
-                    <Tooltip id="edit-tooltip" />
-                    <Tooltip id="delete-tooltip" />
-                    <button
-                      data-tooltip-id="delete-tooltip"
-                      data-tooltip-content="Eliminar materia"
+                    <ButtonAction
+                      variant="delete"
                       onClick={() => handleDeleteSubject(course.Id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
-
+                    />
                   </td>
                 </tr>
               ))}
@@ -443,71 +182,16 @@ const ListTeacherCourses = () => {
           </table>
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
-          <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-gray-700">
-                  Mostrando <span className="font-medium">{startIndex + 1}</span> a{' '}
-                  <span className="font-medium">
-                    {Math.min(startIndex + ITEMS_PER_PAGE, coursesAndSchedules.length)}
-                  </span>{' '}
-                  de <span className="font-medium">{coursesAndSchedules.length}</span> resultados
-                </p>
-              </div>
-              <div>
-                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                  <button
-                    onClick={() => goToPage(1)}
-                    disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    <span className="sr-only">Primera página</span>
-                    <ChevronDoubleLeftIcon className="h-5 w-5" aria-hidden="true" />
-                  </button>
-                  <button
-                    onClick={() => goToPage(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    <span className="sr-only">Anterior</span>
-                    <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
-                  </button>
-
-                  {getPageNumbers().map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => goToPage(page)}
-                      className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === page
-                        ? 'z-10 bg-indigo-50 border-indigo-500 text-indigo-600'
-                        : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                        }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-
-                  <button
-                    onClick={() => goToPage(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    <span className="sr-only">Siguiente</span>
-                    <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
-                  </button>
-                  <button
-                    onClick={() => goToPage(totalPages)}
-                    disabled={currentPage === totalPages}
-                    className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    <span className="sr-only">Última página</span>
-                    <ChevronDoubleRightIcon className="h-5 w-5" aria-hidden="true" />
-                  </button>
-                </nav>
-              </div>
-            </div>
-          </div>
+          <NavPagination
+            startIndex={startIndex}
+            itemsPerPage={ITEMS_PER_PAGE}
+            coursesAndSchedules={coursesAndSchedules}
+            goToPage={goToPage}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            getPageNumbers={getPageNumbers}
+          />
         )}
       </div>
     </div>

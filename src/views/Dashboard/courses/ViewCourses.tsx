@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAppStore } from '../../../store/UseAppStore';
 
 const ViewCourses = () => {
@@ -72,7 +72,7 @@ const ViewCourses = () => {
                     {materia.CupoDisponible}/{materia.CupoMaximo} 
                   </div>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4 whitespace-nowrasp">
                   <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                     ${cupoMateria(materia.CupoMaximo, materia.CupoDisponible) === 'Activa' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
                     {cupoMateria(materia.CupoMaximo, materia.CupoDisponible)}

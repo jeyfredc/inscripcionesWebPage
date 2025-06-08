@@ -4,21 +4,16 @@ import { useAppStore } from '../../store/UseAppStore';
 const Menu = () => {
   const { onLogout, dataUser, creditStudent } = useAppStore();
 
-
-
-
   return (
     <header className="bg-slate-950 shadow-sm sticky top-0 z-10">
       <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
         <div className="flex justify-between h-16">
-          {/* Logo y título - Solo visible en desktop */}
           <div className="hidden sm:flex items-center">
             <h1 className="text-lg sm:text-xl font-semibold text-white whitespace-nowrap">
               Sistema de Inscripciones
             </h1>
           </div>
 
-          {/* Información del usuario - Solo visible en móvil */}
           <div className="flex items-center sm:hidden">
             <div className="flex items-center">
               <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium text-sm mr-2">
@@ -36,7 +31,6 @@ const Menu = () => {
             </div>
           </div>
 
-          {/* Menú desktop */}
           <div className="hidden sm:ml-6 sm:flex sm:items-center space-x-2 md:space-x-4">
             {dataUser?.Rol === 'Estudiante' && (
               <span className="text-white text-sm bg-blue-900/50 px-3 py-1 rounded-full">
@@ -84,7 +78,6 @@ const Menu = () => {
             </button>
           </div>
 
-          {/* Botón de Cerrar sesión en móvil */}
           <div className="absolute right-0 mt-3 mr-2  w-40 rounded-md bg-red-900 ring-1 focus:outline-none sm:hidden z-50">
             <div className="bg-red-700" >
               <button
