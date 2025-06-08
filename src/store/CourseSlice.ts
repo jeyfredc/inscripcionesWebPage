@@ -1,12 +1,9 @@
 import type { StateCreator } from "zustand";
-import { AssignCourse, deleteCourses, deleteSubjectByCodeId, GetCoursesAndSchedules, getCoursesAvailable, getCourseWithoutAssign, PostCreateNewCourse, saveCourses, updateSubjectByCodeId } from "../api/CourseApi";
+import { AssignCourse, deleteSubjectByCodeId, GetCoursesAndSchedules, getCourseWithoutAssign, PostCreateNewCourse, updateSubjectByCodeId } from "../api/CourseApi";
 import type { 
-  CorseDeleteData,
-  CourseInscription, 
   CoursesAndSchedules, 
   CoursesAndSchedulesData, 
   CoursesAvailableData, 
-  CoursesAvailableResponse, 
   CoursesInscriptionResponse, 
   CourseWithoutAssignData, 
   FormAssignCourse, 
@@ -21,9 +18,6 @@ export interface CourseSliceType {
   availableCourses: CoursesAvailableData[];
   coursesAssigned: CourseStudent[];
   coursesAndSchedules: CoursesAndSchedulesData[];
-  getCoursesAvailable: () => Promise<CoursesAvailableResponse>;
-  inscriptionCourses: (courses: CourseInscription) => Promise<CoursesInscriptionResponse>;
-  deleteCourses: (courses: CourseInscription) => Promise<CoursesInscriptionResponse>;
   newCourse: CourseWithoutAssignData[];
   getCourseWithoutAssign: () => Promise<ResponseCourseWithoutAssign>;
   assignCourseTeacher: (courses: FormAssignCourse) => Promise<CoursesInscriptionResponse>;
@@ -48,74 +42,7 @@ export const createCourseSlice: StateCreator<
   coursesAssigned: [],
   coursesAndSchedules: [],
   newCourse: [],
-  
-  getCoursesAvailable: async () => {
-    return utils.withErrorHandling(async () => {
-      const response = await getCoursesAvailable();
-      
-      if (response.Data) {
-        set({ availableCourses: response.Data }, false, 'setAvailableCourses');
-        utils.showAlert(false, response.Message);
-      } else {
-        set({ availableCourses: [] }, false, 'clearAvailableCourses');
-        const errorMessage = response.Message || "Error al cargar los cursos";
-        utils.showAlert(true, errorMessage);
-      }
-      
-      const user = utils.getCurrentUser();
-      if (user?.Rol === 'Estudiante' && user?.Id) {
-        await utils.handleStudentCredits(user.Id);
-      }
-      
-      return response;
-    }, "Error al cargar los cursos");
-  },
-  
-  inscriptionCourses: async (courses: CourseInscription) => {
-    return utils.withErrorHandling(async () => {
-      const response = await saveCourses(courses);
-      
-      if (response.Data) {
-        utils.showAlert(false, response.Message);
-      } else {
-        utils.showAlert(true, response.Message || "Error al inscribir en los cursos");
-      }
-      
-      const user = utils.getCurrentUser();
-      if (user?.Rol === 'Estudiante' && user?.Id) {
-        await utils.handleStudentCredits(user.Id);
-        set({ availableCourses: [] }, false, 'clearAvailableCourses');
-        const appStore = utils.getAppStore();
-        await appStore.getCoursesAvailable?.();
-      }
-      
-      return response;
-    }, "Error al procesar la inscripción");
-  },
 
-  deleteCourses: async (courses: CorseDeleteData[]) => {
-    return utils.withErrorHandling(async () => {
-      const response = await deleteCourses(courses);
-      const studentId = JSON.parse(localStorage.getItem('StudentData') || 'null')?.EstudianteId;
-      
-      if (response.Data) {
-        utils.showAlert(false, response.Data.Message);
-        setTimeout(() => {
-          utils.getAppStore().getCoursesById(studentId);
-        }, 1000);
-      } else {
-        utils.showAlert(true, response.Data?.Message || "Error al eliminar los cursos");
-      }
-      
-      const user = utils.getCurrentUser();
-      if (user?.Rol === 'Estudiante' && user?.Id) {
-        await utils.handleStudentCredits(user.Id);
-        set({ coursesAssigned: [] }, false, 'clearCoursesAssigned');
-      }
-      
-      return response;
-    }, "Error al eliminar los cursos");
-  },
   
   getCourseWithoutAssign: async () => {
     return utils.withErrorHandling(async () => {

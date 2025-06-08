@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { createUserSlice, type UserSliceType } from './UserSlice';
+import {  createUserSlice, type UserSliceType } from './UserSlice';
 import { createCourseSlice, type CourseSliceType } from './CourseSlice';
 import { createStudentSlice, type StudentSliceType } from './StudentSlice';
 import { createTeacherSlice, type TeacherSliceType } from './TeacherSlice';
@@ -18,5 +18,14 @@ export const useAppStore = create<StoreState>()(
     { name: 'app-store' }
   )
 );
+
+// @ts-ignore
+// @ts-ignore
+// @ts-ignore
+// @ts-ignore
+// @ts-ignore
+// @ts-ignore
+// @ts-ignore
+// @ts-ignore
 
 export type AppStore = ReturnType<typeof useAppStore.getState>;

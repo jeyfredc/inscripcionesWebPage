@@ -1,58 +1,115 @@
-// src/views/Dashboard/materias/MisMaterias.tsx
-import React, { useEffect, useRef, useState } from 'react';
-import { useAppStore } from '../../../store/UseAppStore';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAppStore } from '../../../store/UseAppStore';
+import { toast } from 'react-toastify';
+import { getCoursesById, getClassMatesById } from '../../../api/StudentApi';
+import { deleteCourses } from '../../../api/CourseApi';
+
+
+interface Course {
+  Codigomateria: string;
+  Materia: string;
+  Horario: string;
+  Profesor: string;
+}
 
 const MyCourses = () => {
-
-
-  const hasFetched = useRef(false);
-
-  const { getCoursesById, dataUser, coursesAssigned, deleteCourses, getClassMates } = useAppStore();
+  const { dataUser, getCredits, setClassMates } = useAppStore();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (hasFetched.current) return;
-
-    hasFetched.current = true;
-
-    (async () => {
-      setIsLoading(true);
-      try {
-        const response = await getCoursesById(dataUser!.Id_Estudiante);
-        if (!response.Success) {
-          setError('No se pudieron cargar las materias disponibles');
-          console.error('Error al cargar materias:', response.Message);
-        }
-      } catch (err) {
-        setError('Error de conexión al cargar las materias');
-        console.error('Error inesperado:', err);
-      } finally {
-        setIsLoading(false);
+  const { 
+    data: coursesAssigned = [], 
+    isLoading, 
+    error,
+    refetch
+  } = useQuery<Course[]>({
+    queryKey: ['assigned-courses', dataUser?.Id_Estudiante],
+    queryFn: async () => {
+      if (!dataUser?.Id_Estudiante) {
+        console.log('No student ID available');
+        return [];
       }
-    })();
-  }, [getCoursesById, dataUser]);
+      console.log('Fetching courses for student:', dataUser.Id_Estudiante);
+      const response = await getCoursesById(dataUser.Id_Estudiante);
+      if (!response.Success) {
+        console.error('Failed to fetch courses:', response.Message);
+        throw new Error(response.Message || 'Error al cargar las materias');
+      }
+      console.log('Courses fetched successfully:', response.Data);
+      return response.Data || [];
+    },
+    enabled: !!dataUser?.Id_Estudiante,
+    retry: 1,
+    refetchOnMount: 'always',
+    staleTime: 0,
+    retryOnMount: true
+  });
 
-
-  const onRemoveCourse = async (codigoMateria: string) => {
-    try {
-      await deleteCourses([
-        {
-          IdEstudiante: dataUser!.Id_Estudiante,
-          CodigoMateria: codigoMateria
-        }
+  const { mutate: removeCourse } = useMutation({
+    mutationFn: async (codigoMateria: string) => {
+      if (!dataUser?.Id_Estudiante) {
+        throw new Error('ID de estudiante no disponible');
+      }
+      const response = await deleteCourses([{
+        IdEstudiante: dataUser.Id_Estudiante,
+        CodigoMateria: codigoMateria
+      }]);
+      
+      if (!response.Success) {
+        throw new Error(response.Message || 'Error al eliminar la materia');
+      }
+      return response;
+    },
+    onSuccess: async (data) => {
+      await Promise.all([
+        queryClient.invalidateQueries({ 
+          queryKey: ['assigned-courses', dataUser?.Id_Estudiante],
+          refetchType: 'active',
+        }),
+        queryClient.invalidateQueries({ 
+          queryKey: ['availableCourses'],
+          refetchType: 'active',
+        })
       ]);
-    } catch (error) {
+      
+      if (dataUser?.Id) {
+        console.log('Updating credits for user:', dataUser.Id);
+        await getCredits(Number(dataUser.Id));
+      }
+      
+      await refetch();
+      
+      toast.success(data.Message || 'Materia eliminada correctamente');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Error al eliminar la materia');
       console.error('Error al eliminar la materia:', error);
     }
-  };
+  });
 
   const onViewClass = async (codigoMateria: string) => {
-    await getClassMates(dataUser!.Id_Estudiante, codigoMateria);
     navigate(`/dashboard/mis-materias/${codigoMateria}`);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center p-6">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{error.message || 'No se pudieron cargar las materias. Intente de nuevo más tarde.'}</span>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -65,20 +122,25 @@ const MyCourses = () => {
               <li key={materia.Codigomateria} className="px-6 py-4 hover:bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">{materia.Materia} - {materia.Codigomateria}</h3>
+                    <h3 className="text-lg font-medium text-gray-900">
+                      {materia.Materia} - {materia.Codigomateria}
+                    </h3>
                     <p className="text-sm text-gray-500">{materia.Horario}</p>
                     <p className="text-sm text-gray-500">Profesor: {materia.Profesor}</p>
                   </div>
                   <div className="flex gap-2">
-                  <button className="text-red-600 hover:text-red-800 text-sm font-medium" onClick={() => onRemoveCourse(materia.Codigomateria)}>
-                    Dar de baja
-                  </button>
-                  <button 
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium" 
-                    onClick={() => onViewClass(materia.Codigomateria)}
-                  >
-                    Grupo clase
-                  </button>
+                    <button
+                      className="text-red-600 hover:text-red-800 text-sm font-medium"
+                      onClick={() => removeCourse(materia.Codigomateria)}
+                    >
+                      Dar de baja
+                    </button>
+                    <button
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      onClick={() => onViewClass(materia.Codigomateria)}
+                    >
+                      Grupo clase
+                    </button>
                   </div>
                 </div>
               </li>

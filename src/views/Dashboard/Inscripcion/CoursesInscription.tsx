@@ -1,40 +1,48 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../../store/UseAppStore';
-import { CourseInscription } from '../../../types/Courses';
+import { CourseInscription, CoursesAvailableResponse, CoursesAvailableData } from '../../../types/Courses';
 import Warning from '../../../components/Warning/Warning';
 import Spinner from '../../../components/Spinner/Spinner';
+import { toast } from 'react-toastify';
+import { getCoursesAvailable, saveCourses } from '../../../api/CourseApi';
 
 const CoursesInscription = () => {
-  const { getCoursesAvailable, availableCourses, dataUser,creditStudent , inscriptionCourses} = useAppStore();
+  const { dataUser, creditStudent, getCredits } = useAppStore();
   const [selectedMaterias, setSelectedMaterias] = useState<string[]>([]);
   const [formCourses, setFormCourses] = useState<CourseInscription>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const hasFetched = useRef(false);
+  const { 
+    data: availableCourses = [], 
+    isLoading, 
+    error 
+  } = useQuery<CoursesAvailableResponse, Error, CoursesAvailableData[]>({
+    queryKey: ['availableCourses'],
+    queryFn: getCoursesAvailable,
+    select: (response) => response.Data || []
+  });
 
-
-  useEffect(() => {
-    if (hasFetched.current) return;
-    
-    hasFetched.current = true;
-    
-    (async () => {
-      setIsLoading(true);
-      try {
-        const response = await getCoursesAvailable();
-        if (!response.Success) {
-          setError('No se pudieron cargar las materias disponibles');
-          console.error('Error al cargar materias:', response.Message);
+  const { mutate: handleInscription, isPending: isSubmitting } = useMutation({
+    mutationFn: (courses: CourseInscription) => saveCourses(courses),
+    onSuccess: async (response) => {
+      if (response.Success) {
+        toast.success('Inscripción exitosa');
+        await queryClient.invalidateQueries({ queryKey: ['availableCourses'] });
+        if (dataUser?.Id) {
+          await getCredits(Number(dataUser.Id));
         }
-      } catch (err) {
-        setError('Error de conexión al cargar las materias');
-        console.error('Error inesperado:', err);
-      } finally {
-        setIsLoading(false);
+
+        setSelectedMaterias([]);
+        setFormCourses([]);
+      } else {
+        toast.error(response.Message || 'Error al realizar la inscripción');
       }
-    })();
-  }, [getCoursesAvailable]);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    }
+  });
 
   const handleCheckboxChange = (codigoMateria: string) => {
     setSelectedMaterias(prev => {
@@ -61,37 +69,37 @@ const CoursesInscription = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (!dataUser?.Id) {
-      alert('No se pudo identificar al estudiante');
+      toast.error('No se pudo identificar al estudiante');
       return;
     }
 
     if (formCourses.length === 0) {
-      alert('Por favor selecciona al menos una materia');
+      toast.error('Por favor selecciona al menos una materia');
       return;
     }
 
-    inscriptionCourses(formCourses)
+    handleInscription(formCourses);
   };
 
   if (isLoading) {
-    return (
-      <Spinner text="Cargando materias disponibles..." />
-    );
+    return <Spinner text="Cargando materias disponibles..." />;
   }
 
   if (error) {
-    return (
-      <Warning message={error} type="error" />
-    );
+    return <Warning message="Error al cargar las materias disponibles" type="error" />;
   }
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Inscripción de Materias</h1>
-      {creditStudent ===1 &&
-        <Warning message="Lo sentimos, ya no puedes inscribirte en más materias ya que no tienes créditos disponibles" type="error" />
-      }
+      {creditStudent === 1 && (
+        <Warning 
+          message="Lo sentimos, ya no puedes inscribirte en más materias ya que no tienes créditos disponibles" 
+          type="error" 
+        />
+      )}
       <div className="bg-white p-6 rounded-lg shadow">
         {availableCourses.length === 0 ? (
           <div className="text-center py-8">
@@ -101,7 +109,6 @@ const CoursesInscription = () => {
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               {availableCourses.map((materia) => (
-                
                 <div key={materia.CodigoMateria} className="flex items-center p-4 border rounded-lg hover:bg-gray-50">
                   <input
                     type="checkbox"
@@ -127,10 +134,10 @@ const CoursesInscription = () => {
               <div className="mt-6">
                 <button
                   type="submit"
-                  disabled={formCourses.length === 0}
+                  disabled={formCourses.length === 0 || isSubmitting}
                   className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
                 >
-                  Confirmar Inscripción ({formCourses.length})
+                  {isSubmitting ? 'Procesando...' : `Confirmar Inscripción (${formCourses.length})`}
                 </button>
               </div>
             )}

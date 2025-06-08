@@ -1,83 +1,93 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { UserRegistrationForm } from '../../types/User'
-import { useAppStore } from '../../store/UseAppStore'
+import { useMutation } from '@tanstack/react-query';
+
 import ValidationError from './ValidationError'
-const initialState:UserRegistrationForm = {
-    Nombre: '',
-    Email: '',
-    Password: '',
-    RolId: 0
+import { toast } from 'react-toastify'
+import { createAccount } from '../../api/AuthApi'
+const initialState: UserRegistrationForm = {
+  Nombre: '',
+  Email: '',
+  Password: '',
+  RolId: 0
 }
 
 const FormRegister = () => {
+  const [formState, setFormState] = useState<UserRegistrationForm>(initialState);
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [errors, setErrors] = useState<string[]>([]);
+  const [touched, setTouched] = useState({ confirmPassword: false });
+  const [isTeacher, setIsTeacher] = useState<boolean>(false);
+  const navigate = useNavigate();
 
-    const { createUser, successCreateUser, resetSuccessCreateUser    } = useAppStore()
-    const [formState, setFormState] = useState<UserRegistrationForm>(initialState)
-    const [confirmPassword, setConfirmPassword] = useState<string>('')
-    const [errors, setErrors] = useState<string[]>([]);
-    const [touched, setTouched] = useState({
-        confirmPassword: false
-    });
-
-    const navigate = useNavigate()
-  const [isTeacher, setIsTeacher] = useState<boolean>(false)
+  const { mutate: registerUser, isPending } = useMutation({
+    mutationFn: (userData: UserRegistrationForm) => createAccount(userData),
+    onSuccess: (response) => {
+      if (response.Data) {
+        toast.success(response.Message);
+        navigate('/');
+      } else {
+        toast.error(response.Message);
+      }
+    },
+    onError: (error) => {
+      toast.error('Error al procesar el registro. Intenta de nuevo.');
+      console.error('Registration error:', error);
+    }
+  });
 
   useEffect(() => {
-    setFormState(prev => ({ 
-        ...prev,
-        RolId: isTeacher ? 2 : 1
-    }))
+    setFormState(prev => ({
+      ...prev,
+      RolId: isTeacher ? 2 : 1
+    }));
+  }, [isTeacher]);
 
-    if(successCreateUser){
-        navigate('/')
-        resetSuccessCreateUser()
-    }
-}, [isTeacher, successCreateUser])
-
-
-const validatePasswordConfirmation = () => {
+  const validatePasswordConfirmation = () => {
     if (formState.Password !== confirmPassword) {
-        setErrors(['Las contraseñas no coinciden']);
-    } else {
-        setErrors([]);
+      setErrors(['Las contraseñas no coinciden']);
+      return false;
     }
-};
+    setErrors([]);
+    return true;
+  };
 
-const handleConfirmPasswordBlur = () => {
+  const handleConfirmPasswordBlur = () => {
     setTouched(prev => ({ ...prev, confirmPassword: true }));
     validatePasswordConfirmation();
-};
+  };
 
-const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setConfirmPassword(value);
-    
-    // Solo validar si ya se ha tocado el campo
     if (touched.confirmPassword) {
-        if (value && formState.Password !== value) {
-            setErrors(['Las contraseñas no coinciden']);
-        } else {
-            setErrors([]);
-        }
+      validatePasswordConfirmation();
     }
-};
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormState({
       ...formState,
       [e.target.name]: e.target.value
-    })
-    
-  }
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault()
-      if(formState.Password !== confirmPassword){
-        return
-      }
-    createUser(formState)
+    e.preventDefault();
 
-  }
+    if (!validatePasswordConfirmation()) {
+      return;
+    }
+
+    if (formState.Password !== confirmPassword) {
+      toast.error('Las contraseñas no coinciden');
+      return;
+    }
+
+    registerUser(formState);
+  };
+
 
   return (
     <form onSubmit={handleSubmit} className="mt-8 space-y-6">
@@ -150,31 +160,36 @@ const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => 
             Confirmar contraseña
           </label>
           <input
-        id="confirmPassword"
-        name="ConfirmPassword"
-        type="password"
-        autoComplete="new-password"
-        required
-        className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
-            errors.length > 0 ? 'border-red-500' : 'border-gray-300'
-        } placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
-        placeholder="Confirmar contraseña"
-        value={confirmPassword}
-        onChange={handleConfirmPasswordChange}
-        onBlur={handleConfirmPasswordBlur}
-    />
-    {touched.confirmPassword && errors.length > 0 && (
-        <ValidationError errors={errors} />
-    )}
+            id="confirmPassword"
+            name="ConfirmPassword"
+            type="password"
+            autoComplete="new-password"
+            required
+            className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${errors.length > 0 ? 'border-red-500' : 'border-gray-300'
+              } placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
+            placeholder="Confirmar contraseña"
+            value={confirmPassword}
+            onChange={handleConfirmPasswordChange}
+            onBlur={handleConfirmPasswordBlur}
+          />
+          {touched.confirmPassword && errors.length > 0 && (
+            <ValidationError errors={errors} />
+          )}
         </div>
       </div>
 
       <div>
         <button
           type="submit"
-          className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          disabled={isPending}
+          className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${isPending ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
         >
-          Registrarse como {isTeacher ? 'Profesor' : 'Estudiante'}
+          {isPending ? (
+            'Registrando...'
+          ) : (
+            `Registrarse como ${isTeacher ? 'Profesor' : 'Estudiante'}`
+          )}
         </button>
       </div>
 

@@ -9,10 +9,8 @@ export type StudentSliceType = {
   getCredits: (id: number) => Promise<void>;
   setCreditStudent: (credits: number | null) => void;
   studentId: number | null;
-  getCoursesById: (id: number) => Promise<responseCourseByID>;
-  coursesAssigned: CourseStudent[];
   classMatesStudents: ClassMate[];
-  getClassMates: (id: number, codigoMateria: string) => Promise<ClassMatesResponse>;
+  setClassMates: (classMates: ClassMate[]) => void;
 }
 
 export const createStudentSlice: StateCreator<
@@ -27,8 +25,7 @@ export const createStudentSlice: StateCreator<
     creditStudent: JSON.parse(localStorage.getItem('StudentData') || 'null')?.CreditosDisponibles,
     isLoadingCredits: false,
     studentId: JSON.parse(localStorage.getItem('StudentData') || 'null')?.EstudianteId,
-    coursesAssigned: [],
-    classMatesStudents: [],
+    classMatesStudents: [], 
 
     getCredits: async (id: number) => {
       set({ isLoadingCredits: true });
@@ -55,25 +52,8 @@ export const createStudentSlice: StateCreator<
     },
 
     setCreditStudent: (credits) => set({ creditStudent: credits }),
-    getCoursesById: async (id: number) => {
-      const response = await utils.withErrorHandling(
-        () => getCoursesById(id),
-        'Error al cargar los cursos'
-      );
-      
-      set({ coursesAssigned: response.Data });
-      utils.showAlert(false, response.Message);
-      return response;
-    },
-    getClassMates: async (id: number, codigoMateria: string) => {
-      const response = await utils.withErrorHandling(
-        () => getClassMatesById(id, codigoMateria),
-        'Error al cargar los compañeros'
-      );
-      
-      set({ classMatesStudents: response.Data });
-      utils.showAlert(false, response.Message);
-      return response;
-    }
+
+    
+    setClassMates: (classMates: ClassMate[]) => set({ classMatesStudents: classMates })
   }
 }
