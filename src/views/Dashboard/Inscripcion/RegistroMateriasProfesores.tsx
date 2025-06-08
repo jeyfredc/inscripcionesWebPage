@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
-import { FormRegisterNewCourse } from '../../../types/Courses';
-import { useAppStore } from '../../../store/UseAppStore';
+import { CoursesAndSchedules, FormRegisterNewCourse } from '../../../types/Courses';
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ApiResponse } from '../../../types/api';
+import { PostCreateNewCourse } from '../../../api/CourseApi';
+import { toast } from 'react-toastify';
 
 const initialState: FormRegisterNewCourse = {
   Nombre: '',
@@ -12,13 +16,27 @@ const initialState: FormRegisterNewCourse = {
 };
 
 const RegistroMateriasProfesores = () => {
-
-  const { saveNewCourse } = useAppStore();
+  const queryClient = useQueryClient();
   const [formData, setFormData] = useState<FormRegisterNewCourse>(initialState);
+
+  const { mutate: createCourse, isPending } = useMutation<ApiResponse<CoursesAndSchedules>, Error, FormRegisterNewCourse>({
+    mutationFn: PostCreateNewCourse,
+    onSuccess: (data) => {      
+      if (data.Success) {
+        toast.success('Materia registrada exitosamente');
+        setFormData(initialState);
+        queryClient.invalidateQueries({ queryKey: ['courses'] });
+      } else {
+        toast.error(data.Message || 'Error al registrar la materia');
+      }
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Error al procesar la solicitud');
+    }
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
-    
     setFormData(prev => ({
       ...prev,
       [name]: type === 'number' ? Number(value) : value
@@ -27,9 +45,9 @@ const RegistroMateriasProfesores = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    saveNewCourse(formData);
-    setFormData(initialState);
+    createCourse(formData);
   };
+
 
   return (
     <div className="p-6">
@@ -111,11 +129,16 @@ const RegistroMateriasProfesores = () => {
           </div>
 
           <div>
-            <button
+          <button
               type="submit"
-              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              disabled={isPending}
+              className={`inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white ${
+                isPending 
+                  ? 'bg-blue-400' 
+                  : 'bg-blue-600 hover:bg-blue-700'
+              } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
             >
-              Registrar Materia
+              {isPending ? 'Registrando...' : 'Registrar Materia'}
             </button>
           </div>
         </form>

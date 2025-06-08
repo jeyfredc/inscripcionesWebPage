@@ -1,7 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useAppStore } from '../store/UseAppStore';
-import { CoursesAndSchedulesData, FormUpdateSubject } from '../types/Courses';
+import { useState, useCallback, useEffect } from 'react';
+import { useMutation, useQuery, useQueryClient, UseQueryResult } from '@tanstack/react-query';
+import { ApiResponse } from '../types/api';
+import { toast } from 'react-toastify';
 import { RequestUnassignTeacher } from '../types/Teacher';
+import { deleteSubjectByCodeId, GetCoursesAndSchedules, updateSubjectByCodeId } from '../api/CourseApi';
+import { PostUnassignTeacher } from '../api/ProfesorApi';
+import { CoursesAndSchedulesData, FormUpdateSubject } from '../types/Courses';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -10,42 +14,91 @@ interface ValidationErrors {
 }
 
 export const useListTeacherCourses = () => {
-  const {
-    coursesAndSchedules,
-    getCoursesAndSchedules,
-    printAlert,
-    postUnassignTeacher,
-    deleteSubject,
-    updateSubject
-  } = useAppStore();
+
+  const queryClient = useQueryClient();
 
   const [currentPage, setCurrentPage] = useState(1);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState<Record<number, Partial<CoursesAndSchedulesData>>>({});
   const [errors, setErrors] = useState<Record<number, ValidationErrors>>({});
-  const hasFetched = useRef(false);
+  const [coursesAndSchedules, setCoursesAndSchedules] = useState<CoursesAndSchedulesData[]>([]);
 
-  const totalPages = Math.ceil(coursesAndSchedules.length / ITEMS_PER_PAGE);
+  const updateSubjectMutation = useMutation({
+    mutationFn: (data: FormUpdateSubject) => updateSubjectByCodeId(data),
+    onSuccess: (response: ApiResponse<CoursesAndSchedulesData>) => {
+      if (response.Success) {
+        queryClient.invalidateQueries({ queryKey: ['teacherCoursesList'] });
+        toast.success(response.Message);
+        setEditingId(null);
+        setFormData({});
+      } else {
+        throw new Error(response.Message || 'Error al actualizar la materia');
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    }
+  });
+
+  const unassignTeacherMutation = useMutation({
+    mutationFn: (data: RequestUnassignTeacher) => PostUnassignTeacher(data),
+    onSuccess: (response: ApiResponse<any>) => {
+      if (response.Success) {
+        queryClient.invalidateQueries({ queryKey: ['teacherCoursesList'] });
+        toast.success(response.Message);
+      } else {
+        throw new Error(response.Message || 'Error al desasignar el profesor');
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    }
+  });
+
+  const deleteSubjectMutation = useMutation({
+    mutationFn: (subjectCode: string) => deleteSubjectByCodeId(subjectCode),
+    onSuccess: (response: ApiResponse<any>, subjectCode: string) => {
+      if (response.Success) {
+        queryClient.invalidateQueries({ queryKey: ['teacherCoursesList'] });
+        toast.success(response.Message);
+      } else {
+        throw new Error(response.Message || `Error al eliminar la materia ${subjectCode}`);
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    }
+  });
+
+  const totalPages = Math.ceil((coursesAndSchedules?.length || 0) / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedData = coursesAndSchedules.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedData = coursesAndSchedules?.slice(startIndex, startIndex + ITEMS_PER_PAGE) || [];
+
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['teacherCoursesList'],
+    queryFn: GetCoursesAndSchedules,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchOnReconnect: true
+  });
 
   useEffect(() => {
-    if (hasFetched.current) return;
-    hasFetched.current = true;
-    
-    const loadCourses = async () => {
-      try {
-        const response = await getCoursesAndSchedules();
-        if (!response.Success) {
-          console.error('Error al cargar materias:', response.Message);
-        }
-      } catch (err) {
-        console.error('Error inesperado:', err);
+    if (data) {
+      if (data.Success && data.Data) {
+        setCoursesAndSchedules(data.Data);
+      } else {
+        toast.error(data.Message || 'Error al cargar las materias');
       }
-    };
+    }
+  }, [data]);
 
-    loadCourses();
-  }, [getCoursesAndSchedules]);
+  useEffect(() => {
+    if (error) {
+      toast.error(error.message);
+    }
+  }, [error]);
 
   const validateField = useCallback((name: string, value: string | number): string => {
     const strValue = String(value);
@@ -157,7 +210,7 @@ export const useListTeacherCourses = () => {
     if (!course) return;
 
     if (course.Cupo_Disponible < course.Cupo_Maximo) {
-      printAlert(true, 'No se puede editar porque hay estudiantes inscritos');
+      toast.error('No se puede editar porque hay estudiantes inscritos');
       return;
     }
     
@@ -166,87 +219,60 @@ export const useListTeacherCourses = () => {
       ...prev,
       [id]: { ...course }
     }));
-  }, [coursesAndSchedules, printAlert]);
+  }, [coursesAndSchedules]);
 
   const handleDeleteSubject = useCallback((id: number) => {
     const course = coursesAndSchedules.find(c => c.Id === id);
     if (!course) return;
     
     if (course.Cupo_Disponible < course.Cupo_Maximo) {
-      printAlert(true, 'No se puede eliminar porque hay estudiantes inscritos');
+      toast.error('No se puede eliminar porque hay estudiantes inscritos');
       return;
     }
     if (course.Profesor_Asignado !== null) {
-      printAlert(true, 'No se puede eliminar porque tiene un profesor asignado');
+      toast.error('No se puede eliminar porque tiene un profesor asignado');
       return;
     }
 
-    deleteSubject(course.Codigo);
-  }, [coursesAndSchedules, deleteSubject, printAlert]);
+    deleteSubjectMutation.mutate(course.Codigo);
+  }, [coursesAndSchedules, deleteSubjectMutation]);
 
-  const handleSave = useCallback(async (id: number) => {
+  const handleSave = useCallback((id: number) => {
     const courseToSave = formData[id];
     if (!courseToSave) return;
 
+    const formUpdateSubject: FormUpdateSubject = {
+      MateriaId: Number(courseToSave.Id),
+      Codigo: courseToSave.Codigo!,
+      Nombre: courseToSave.Materia!,
+      Descripcion: courseToSave.Descripcion || '',
+      Creditos: Number(courseToSave.Creditos) || 1,
+      Cupo_Maximo: Number(courseToSave.Cupo_Maximo) || 1,
+      Horarios: courseToSave.Horarios || ''
+    };
 
+    updateSubjectMutation.mutate(formUpdateSubject);
+  }, [formData, updateSubjectMutation]);
 
-    try {
-      setEditingId(null);
-      const formUpdateSubject: FormUpdateSubject = {
-        MateriaId: Number(courseToSave.Id),
-        Codigo: courseToSave.Codigo!,
-        Nombre: courseToSave.Materia!,
-        Descripcion: courseToSave.Descripcion || '',
-        Creditos: Number(courseToSave.Creditos) || 1,
-        Cupo_Maximo: Number(courseToSave.Cupo_Maximo) || 1,
-        Horarios: courseToSave.Horarios || ''
-      };
-
-      const response = await updateSubject(formUpdateSubject);
-      if (!response.Success) {
-        printAlert(true, response.Message || 'Error al actualizar la materia');
-        return;
-      }
-
-      printAlert(false, 'Materia actualizada correctamente');
-      setFormData({});
-    } catch (error) {
-      console.error('Error al guardar los cambios:', error);
-      printAlert(true, 'Ocurrió un error al guardar los cambios');
-    }
-  }, [formData, updateSubject, printAlert]);
-
-  const handleUnassignTeacher = useCallback(async (id: number) => {
+  const handleUnassignTeacher = useCallback((id: number) => {
     const course = coursesAndSchedules.find(c => c.Id === id);
     if (!course) return;
 
     if (course.Cupo_Disponible < course.Cupo_Maximo) {
-      printAlert(true, 'No se puede desasignar porque hay estudiantes inscritos');
+      toast.error('No se puede desasignar porque hay estudiantes inscritos');
       return;
     }
 
     if (!course.ProfesorId || !course.Codigo) {
-      printAlert(true, 'No se puede desasignar: información del profesor o código de materia inválida');
+      toast.error('No se puede desasignar: información del profesor o código de materia inválida');
       return;
     }
 
-    try {
-      const response = await postUnassignTeacher({
-        ProfesorId: course.ProfesorId,
-        CodigoMateria: course.Codigo
-      });
-
-      if (!response.Success) {
-        printAlert(true, response.Message || 'Error al desasignar el profesor');
-        return;
-      }
-
-      printAlert(false, 'Profesor desasignado correctamente');
-    } catch (error) {
-      console.error('Error al desasignar profesor:', error);
-      printAlert(true, 'Ocurrió un error al desasignar el profesor');
-    }
-  }, [coursesAndSchedules, postUnassignTeacher, printAlert]);
+    unassignTeacherMutation.mutate({
+      ProfesorId: course.ProfesorId,
+      CodigoMateria: course.Codigo
+    });
+  }, [coursesAndSchedules, unassignTeacherMutation]);
 
   const getPageNumbers = () => {
     const pageNumbers = [];
@@ -278,6 +304,8 @@ export const useListTeacherCourses = () => {
     startIndex,
     totalPages,
     paginatedData,
+    isLoading,
+    error,
     goToPage,
     validateField,
     handleInputChange,
@@ -285,6 +313,8 @@ export const useListTeacherCourses = () => {
     handleDeleteSubject,
     handleSave,
     handleUnassignTeacher,
-    getPageNumbers
+    getPageNumbers,
+    courses: coursesAndSchedules || [],
+    coursesAndSchedules
   };
 };

@@ -1,31 +1,17 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import {  createUserSlice, type UserSliceType } from './UserSlice';
-import { createCourseSlice, type CourseSliceType } from './CourseSlice';
-import { createStudentSlice, type StudentSliceType } from './StudentSlice';
-import { createTeacherSlice, type TeacherSliceType } from './TeacherSlice';
+import { createStoreSlice, StoreSliceType } from './StoreAppSlice';
 
-type StoreState = UserSliceType & CourseSliceType & StudentSliceType & TeacherSliceType;
+type StoreState = StoreSliceType 
 
 export const useAppStore = create<StoreState>()(
   devtools(
     (...a) => ({
-      ...createUserSlice(...a),
-      ...createCourseSlice(...a),
-      ...createStudentSlice(...a),
-      ...createTeacherSlice(...a),
+      ...createStoreSlice(...a),
     }),
     { name: 'app-store' }
   )
 );
 
-// @ts-ignore
-// @ts-ignore
-// @ts-ignore
-// @ts-ignore
-// @ts-ignore
-// @ts-ignore
-// @ts-ignore
-// @ts-ignore
 
 export type AppStore = ReturnType<typeof useAppStore.getState>;

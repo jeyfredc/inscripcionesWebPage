@@ -24,10 +24,10 @@ const ITEMS_PER_PAGE = 8;
 
 const ListTeacherCourses = () => {
 
-  const { coursesAndSchedules } = useAppStore();
   
   const {
     currentPage,
+    courses,
     editingId,
     formData,
     errors,
@@ -186,7 +186,7 @@ const ListTeacherCourses = () => {
           <NavPagination
             startIndex={startIndex}
             itemsPerPage={ITEMS_PER_PAGE}
-            coursesAndSchedules={coursesAndSchedules}
+            coursesAndSchedules={courses}
             goToPage={goToPage}
             currentPage={currentPage}
             totalPages={totalPages}
