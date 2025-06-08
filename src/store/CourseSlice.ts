@@ -100,7 +100,6 @@ export const createCourseSlice: StateCreator<
       
       if (response.Data) {
         utils.showAlert(false, response.Data.Message);
-        await appStore.getCoursesAvailable?.();
       } else {
         utils.showAlert(true, response.Data?.Message || "Error al eliminar los cursos");
       }
@@ -114,6 +113,7 @@ export const createCourseSlice: StateCreator<
         
         if (appStore.getCoursesById && studentId) {
           await appStore.getCoursesById(Number(studentId));
+          await appStore.getCoursesAvailable?.();
         }
       }
       
